@@ -1,0 +1,59 @@
+# See https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+[profile.default]
+src = 'src'
+# for development
+out = 'out'
+libs = ['lib']
+# for deploy
+optimizer = true
+optimizer-runs = 200
+extra-output-files = [
+  'metadata',
+  'ir',
+  'irOptimized',
+  'ewasm',
+  'evm.assembly',
+]
+
+[profile.default.optimizer_details]
+constantOptimizer = true
+yul = true
+
+[profile.default.optimizer_details.yul_details]
+stackAllocation = true
+
+[fmt]
+line_length = 120
+tab_width = 4
+sort_imports = true
+wrap_comments = true
+bracket_spacing = true
+override_spacing = true
+contract_new_lines = false
+single_line_statement_blocks = 'multi'
+number_underscore = 'thousands'
+hex_underscore = 'bytes'
+
+[fuzz]
+runs = 4096
+
+[invariant]
+runs = 256
+
+[profile.checker.model_checker]
+contracts = { 'src/CPQD.sol' = ['CPQD'] }
+engine = 'chc'
+timeout = 10_000
+targets = [
+  'assert',
+  'underflow',
+  'overflow',
+  'divByZero',
+  'constantCondition',
+  'popEmptyArray',
+  'outOfBounds',
+]
+invariants = [
+  'contract',
+  'reentrancy',
+]

@@ -19,3 +19,35 @@ Caulculate the integer square root of a number using EVM bytecode.
 ### 4. Gas-Burner Challenge
 
 Create a smart contract the consumes 100% of the provided gas.
+
+## Development
+
+### Build
+
+```shell
+$ forge build
+```
+
+#### Build with Model Checker
+
+```shell
+$ FOUNDRY_PROFILE=checker forge build
+```
+
+### Test
+
+```shell
+$ forge test
+```
+
+### Format
+
+```shell
+$ forge fmt
+```
+
+### Gas Snapshots
+
+```shell
+$ forge snapshot
+```
