@@ -22,6 +22,10 @@ Create a smart contract the consumes 100% of the provided gas.
 
 ## Development
 
+```shell
+$ pre-commit install
+```
+
 ### Build
 
 ```shell
