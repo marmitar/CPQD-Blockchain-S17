@@ -4,26 +4,28 @@ pragma solidity ^0.8.27;
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
 /**
- * @title Simple [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token implementation.
+ * @title Marmitex ERC-20 tokens.
  * @author Tiago de Paula Alves <tiagodepalves@gmail.com>
- * @notice Provides basic functionality to transfer tokens, as well as allow tokens to be approved so they can be spent
- * by another on-chain third party.
+ * @notice Simple [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token implementation, which provides basic
+ * functionality to transfer tokens, as well as allow tokens to be approved so they can be spent by another on-chain
+ * third party.
  */
 contract TrabalhoERC20 is IERC20 {
     /**
-     * @notice Returns the name of the token.
+     * @notice The name of the Marmitex token.
      */
-    function name() external view returns (string memory) { }
+    string public name = "Marmitex";
 
     /**
-     * @notice Returns the symbol of the token.
+     * @notice The symbol of the Marmitex token.
      */
-    function symbol() external view returns (string memory) { }
+    string public symbol = "MTX";
 
+    /// forge-lint: disable-next-item(screaming-snake-case-immutable)
     /**
-     * @notice Returns the decimals places of the token.
+     * @notice The decimals places of the Marmitex token.
      */
-    function decimals() external view returns (uint8) { }
+    uint8 public immutable decimals = 16;
 
     /**
      * @notice Returns the amount of tokens in existence.
