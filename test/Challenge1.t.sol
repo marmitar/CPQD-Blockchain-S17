@@ -28,4 +28,12 @@ contract Challenge1Test is Test {
         assertEq(mtx.symbol(), "MTX");
         assertEq(mtx.decimals(), 16);
     }
+
+    /**
+     * Checks that `TrabalhoERC20` starts with all balances zeroed.
+     */
+    function testFuzz_StartsEmpty(address account) public view {
+        assertEq(mtx.balanceOf(account), 0);
+        assertEq(mtx.totalSupply(), 0);
+    }
 }
