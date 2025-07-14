@@ -33,7 +33,7 @@ contract TrabalhoERC20 is IERC20 {
     mapping(address account => uint256) private _balance;
 
     /**
-     * @dev All accounts that had a positive `balance` at some point.
+     * @dev All accounts that had a positive `_balance` at some point.
      */
     address[] private _accounts;
 
@@ -51,29 +51,29 @@ contract TrabalhoERC20 is IERC20 {
     /**
      * @notice Returns the amount of tokens owned by `account`.
      */
-    function balanceOf(address account) external view returns (uint256) {
-        // returns 0 if `account` is not in `balance`
+    function balanceOf(address account) external view returns (uint256 balance) {
+        // returns 0 if `account` is not in `_balance`
         return _balance[account];
     }
 
     /**
      * @notice Moves `amount` tokens from the caller's account to `to`.
-     * @dev Triggers a `Transfer` event.
+     * @dev Triggers a {IERC20-Transfer} event.
      */
-    function transfer(address to, uint256 amount) external returns (bool) { }
+    function transfer(address to, uint256 amount) external returns (bool success) { }
 
     /**
      * @notice Moves `amount` tokens from `from` to `to` using the allowance mechanism `amount` is then deducted from
      * the caller's allowance.
-     * @dev Triggers a `Transfer` event.
+     * @dev Triggers a {IERC20-Transfer} event.
      */
-    function transferFrom(address from, address to, uint256 amount) external returns (bool) { }
+    function transferFrom(address from, address to, uint256 amount) external returns (bool success) { }
 
     /**
      * @notice Sets `amount` as the allowance of `spender` over the caller's tokens.
-     * @dev Triggers an `Approval` event.
+     * @dev Triggers an {IERC20-Approval} event.
      */
-    function approve(address spender, uint256 amount) external returns (bool) { }
+    function approve(address spender, uint256 amount) external returns (bool success) { }
 
     /**
      * @notice Returns the remaining number of tokens that `spender` is allowed to spend on behalf of `owner`.

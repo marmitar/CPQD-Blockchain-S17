@@ -47,7 +47,7 @@ Tips:
 
 ## 3. EVM SQRT - 2 points
 
-Implement an **EVM** smart contract using *only OPCODES* that computes the integer square root of a number.
+Implement an EVM smart contract using *only OPCODES* that computes the integer square root of a number.
 
 1. If the result is not an integer, round it down, e.g., square root of 5 must return 2.
 2. The input value is a 256-bit integer, provided in `calldata` position 0 and readable with `PUSH0` followed by
