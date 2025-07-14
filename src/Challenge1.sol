@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
 /**
- * @title Marmitex ERC-20 tokens.
+ * @title Heir Coins, implemented as ERC-20 tokens.
  * @author Tiago de Paula Alves <tiagodepalves@gmail.com>
  * @notice Simple [ERC-20](https://eips.ethereum.org/EIPS/eip-20) token implementation, which provides basic
  * functionality to transfer tokens, as well as allow tokens to be approved so they can be spent by another on-chain
@@ -14,20 +14,32 @@ contract TrabalhoERC20 is IERC20 {
     // REVIEW: overflows?
 
     /**
-     * @notice The name of the Marmitex token.
+     * @notice He who owns it all.
      */
-    string public name = "Marmitex";
+    address public immutable THE_HEIR = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955;
 
     /**
-     * @notice The symbol of the Marmitex token.
+     * @notice The name of the Heir Coin.
      */
-    string public symbol = "MTX";
+    string public name = "Heir Coin";
+
+    /**
+     * @notice The symbol of the Heir Coin.
+     */
+    string public symbol = "HRC";
 
     /// forge-lint: disable-next-item(screaming-snake-case-immutable)
     /**
-     * @notice The decimals places of the Marmitex token.
+     * @notice The decimals places of the Heir Coin, which is none, because the coin is absolute.
      */
-    uint8 public immutable decimals = 16;
+    uint8 public immutable decimals = 0;
+
+    /**
+     * @notice Start the heraldry.
+     */
+    constructor() {
+        _balance[_registeredIndex(THE_HEIR)] = 1000;
+    }
 
     /**
      * @dev Current amount of tokens assigned to each account.
@@ -35,7 +47,7 @@ contract TrabalhoERC20 is IERC20 {
     uint256[] private _balance;
 
     /**
-     * @notice Returns the amount of tokens in existence.
+     * @notice Returns the amount of tokens in existence, which should be 1000.
      */
     function totalSupply() external view returns (uint256) {
         uint256 total = 0;
