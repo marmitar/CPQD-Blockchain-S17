@@ -11,6 +11,8 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
  * third party.
  */
 contract TrabalhoERC20 is IERC20 {
+    // REVIEW: overflows?
+
     /**
      * @notice The name of the Marmitex token.
      */
@@ -95,23 +97,43 @@ contract TrabalhoERC20 is IERC20 {
     }
 
     /**
+     * @dev How many tokens of each `owner` are assigned to each `spender`.
+     */
+    mapping(address owner => mapping(address spender => uint256 amount)) private _allowed;
+
+    /**
      * @notice Moves `amount` tokens from `from` to `to` using the allowance mechanism `amount` is then deducted from
      * the caller's allowance.
      * @dev Triggers a {IERC20-Transfer} event.
      */
     function transferFrom(address from, address to, uint256 amount) external returns (bool success) {
-        // TODO: check allowance
-        return _transfer(from, to, amount);
+        if (_allowed[from][msg.sender] < amount) {
+            return false;
+        }
+        success = _transfer(from, to, amount);
+        if (success) {
+            // REVIEW: is it safe to do after _transfer?
+            _allowed[from][msg.sender] -= amount;
+        }
+        return success;
     }
 
     /**
      * @notice Sets `amount` as the allowance of `spender` over the caller's tokens.
      * @dev Triggers an {IERC20-Approval} event.
      */
-    function approve(address spender, uint256 amount) external returns (bool success) { }
+    function approve(address spender, uint256 amount) external returns (bool success) {
+        // REVIEW: zero?
+        _allowed[msg.sender][spender] = amount;
+
+        emit Approval(msg.sender, spender, amount);
+        return true;
+    }
 
     /**
      * @notice Returns the remaining number of tokens that `spender` is allowed to spend on behalf of `owner`.
      */
-    function allowance(address owner, address spender) external view returns (uint256) { }
+    function allowance(address owner, address spender) external view returns (uint256 remaining) {
+        return _allowed[owner][spender];
+    }
 }
