@@ -30,30 +30,43 @@ contract TrabalhoERC20 is IERC20 {
     /**
      * @dev Current amount of tokens assigned to each account.
      */
-    mapping(address account => uint256) private _balance;
-
-    /**
-     * @dev All accounts that had a positive `_balance` at some point.
-     */
-    address[] private _accounts;
+    uint256[] private _balance;
 
     /**
      * @notice Returns the amount of tokens in existence.
      */
     function totalSupply() external view returns (uint256) {
         uint256 total = 0;
-        for (uint256 i = 0; i < _accounts.length; i++) {
-            total += _balance[_accounts[i]];
+        for (uint256 i = 0; i < _balance.length; i++) {
+            total += _balance[i];
         }
         return total;
     }
 
     /**
+     * @dev The `account` index in the `_balance` array.
+     */
+    mapping(address account => uint256 index) private _index;
+
+    /**
      * @notice Returns the amount of tokens owned by `account`.
      */
     function balanceOf(address account) external view returns (uint256 balance) {
-        // returns 0 if `account` is not in `_balance`
-        return _balance[account];
+        uint256 idx = _index[account];
+        return idx > 0 ? _balance[idx - 1] : 0;
+    }
+
+    /**
+     * @dev Recover the registered `_index` of `account`, if any, or create a new one with `_balance` zero.
+     */
+    function _registeredIndex(address account) private returns (uint256 index) {
+        uint256 idx = _index[account];
+        if (idx <= 0) {
+            _balance.push(0);
+            idx = _balance.length;
+            _index[account] = idx;
+        }
+        return idx - 1;
     }
 
     /**
@@ -61,12 +74,13 @@ contract TrabalhoERC20 is IERC20 {
      * if the transfer was made, or `false` if the balance is not sufficient.
      */
     function _transfer(address from, address to, uint256 amount) private returns (bool success) {
-        if (_balance[from] < amount) {
+        uint256 indexFrom = _index[from];
+        if (indexFrom <= 0 || _balance[indexFrom - 1] < amount) {
             return false;
         }
 
-        _balance[from] -= amount;
-        _balance[to] += amount;
+        _balance[indexFrom] -= amount;
+        _balance[_registeredIndex(to)] += amount;
 
         emit Transfer(from, to, amount);
         return true;
