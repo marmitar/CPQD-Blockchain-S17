@@ -57,17 +57,38 @@ contract TrabalhoERC20 is IERC20 {
     }
 
     /**
+     * @dev Internal {transferFrom} implementation. Allowance unchecked, only `_balance` is verified. Returns `true`
+     * if the transfer was made, or `false` if the balance is not sufficient.
+     */
+    function _transfer(address from, address to, uint256 amount) private returns (bool success) {
+        if (_balance[from] < amount) {
+            return false;
+        }
+
+        _balance[from] -= amount;
+        _balance[to] += amount;
+
+        emit Transfer(from, to, amount);
+        return true;
+    }
+
+    /**
      * @notice Moves `amount` tokens from the caller's account to `to`.
      * @dev Triggers a {IERC20-Transfer} event.
      */
-    function transfer(address to, uint256 amount) external returns (bool success) { }
+    function transfer(address to, uint256 amount) external returns (bool success) {
+        return _transfer(msg.sender, to, amount);
+    }
 
     /**
      * @notice Moves `amount` tokens from `from` to `to` using the allowance mechanism `amount` is then deducted from
      * the caller's allowance.
      * @dev Triggers a {IERC20-Transfer} event.
      */
-    function transferFrom(address from, address to, uint256 amount) external returns (bool success) { }
+    function transferFrom(address from, address to, uint256 amount) external returns (bool success) {
+        // TODO: check allowance
+        return _transfer(from, to, amount);
+    }
 
     /**
      * @notice Sets `amount` as the allowance of `spender` over the caller's tokens.
