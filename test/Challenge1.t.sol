@@ -24,7 +24,9 @@ contract Challenge1Test is Test {
      * @notice Verifies that {TrabalhoERC20} implements the optional [ERC-20](https://eips.ethereum.org/EIPS/eip-20)
      * usability methods.
      */
-    function invariant_HasOptionalMetadata() external view {
+    function invariant_HasOptionalMetadata() external {
+        targetSender(hrc.THE_HEIR());
+
         assertEq(hrc.name(), "Heir Coin");
         assertEq(hrc.symbol(), "HRC");
         assertEq(hrc.decimals(), 0);
@@ -33,7 +35,9 @@ contract Challenge1Test is Test {
     /**
      * @notice Total supply never changes for the Heir Coin.
      */
-    function invariant_TotalSupply() external view {
+    function invariant_TotalSupply() external {
+        targetSender(hrc.THE_HEIR());
+
         assertEq(hrc.totalSupply(), 1000);
     }
 
@@ -104,9 +108,14 @@ contract Challenge1Test is Test {
     function testFuzz_FailTransferInsufficientBalance(address owner) external {
         uint256 initialBalance = owner == hrc.THE_HEIR() ? 1000 : 0;
         address to = address(this);
+        uint256 amount = initialBalance + 1;
+        vm.assume(to != owner);
 
+        vm.expectRevert(
+            abi.encodeWithSelector(TrabalhoERC20.InsufficientBalance.selector, owner, initialBalance, amount)
+        );
         vm.prank(owner);
-        assertFalse(hrc.transfer(to, initialBalance + 1));
+        assertFalse(hrc.transfer(to, amount));
 
         assertEq(hrc.balanceOf(hrc.THE_HEIR()), hrc.totalSupply());
         assertEq(hrc.balanceOf(owner), initialBalance);
@@ -121,10 +130,14 @@ contract Challenge1Test is Test {
         address owner = hrc.THE_HEIR();
         address spender = address(this);
         uint256 approval = amount - 1;
+        vm.assume(spender != owner);
 
         vm.prank(owner);
         assertTrue(hrc.approve(spender, approval));
 
+        vm.expectRevert(
+            abi.encodeWithSelector(TrabalhoERC20.InsufficientAllowance.selector, owner, spender, approval, amount)
+        );
         assertFalse(hrc.transferFrom(owner, to, amount));
         assertEq(hrc.allowance(owner, spender), approval);
 
@@ -140,11 +153,15 @@ contract Challenge1Test is Test {
         vm.assume(amount > 1000);
         address owner = hrc.THE_HEIR();
         address spender = address(this);
-        uint256 approval = amount - 1;
+        uint256 approval = bound(amount, 0, type(uint256).max - 1) + 1;
+        vm.assume(spender != owner);
 
         vm.prank(owner);
         assertTrue(hrc.approve(spender, approval));
 
+        vm.expectRevert(
+            abi.encodeWithSelector(TrabalhoERC20.InsufficientBalance.selector, owner, hrc.totalSupply(), amount)
+        );
         assertFalse(hrc.transferFrom(owner, to, amount));
         assertEq(hrc.allowance(owner, spender), approval);
 

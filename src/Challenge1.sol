@@ -11,8 +11,6 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
  * third party.
  */
 contract TrabalhoERC20 is IERC20 {
-    // REVIEW: overflows?
-
     /**
      * @notice He who owns it all.
      */
@@ -35,10 +33,20 @@ contract TrabalhoERC20 is IERC20 {
     uint8 public immutable decimals = 0;
 
     /**
+     * @notice Owner doesn't have enough balance to complete the transaction.
+     */
+    error InsufficientBalance(address owner, uint256 balance, uint256 required);
+
+    /**
+     * @notice Spender is not allowed to transfer the required funds from owner.
+     */
+    error InsufficientAllowance(address owner, address spender, uint256 allowance, uint256 required);
+
+    /**
      * @notice Start the heraldry.
      */
     constructor() {
-        _balance[_registeredIndex(THE_HEIR)] = 1000;
+        _register(THE_HEIR, 1000);
     }
 
     /**
@@ -66,38 +74,39 @@ contract TrabalhoERC20 is IERC20 {
      * @notice Returns the amount of tokens owned by `account`.
      */
     function balanceOf(address account) external view returns (uint256 balance) {
-        uint256 idx = _index[account];
-        return idx > 0 ? _balance[idx - 1] : 0;
+        uint256 index = _index[account];
+        return index > 0 ? _balance[index - 1] : 0;
     }
 
     /**
-     * @dev Recover the registered `_index` of `account`, if any, or create a new one with `_balance` zero.
+     * @dev Register `account` in the token system with `initialBalance`.
      */
-    function _registeredIndex(address account) private returns (uint256 index) {
-        uint256 idx = _index[account];
-        if (idx <= 0) {
-            _balance.push(0);
-            idx = _balance.length;
-            _index[account] = idx;
-        }
-        return idx - 1;
+    function _register(address account, uint256 initialBalance) private {
+        _balance.push(initialBalance);
+        _index[account] = _balance.length;
     }
 
     /**
      * @dev Internal {transferFrom} implementation. Allowance unchecked, only `_balance` is verified. Returns `true`
      * if the transfer was made, or `false` if the balance is not sufficient.
      */
-    function _transfer(address from, address to, uint256 amount) private returns (bool success) {
+    function _transfer(address from, address to, uint256 amount) private {
         uint256 indexFrom = _index[from];
-        if (indexFrom <= 0 || _balance[indexFrom - 1] < amount) {
-            return false;
+        uint256 balanceFrom = indexFrom > 0 ? _balance[indexFrom - 1] : 0;
+        require(balanceFrom >= amount, InsufficientBalance(from, balanceFrom, amount));
+
+        if (amount > 0) {
+            _balance[indexFrom - 1] = balanceFrom - amount;
+
+            uint256 indexTo = _index[to];
+            if (indexTo > 0) {
+                _balance[indexTo - 1] += amount;
+            } else {
+                _register(to, amount);
+            }
         }
 
-        _balance[indexFrom - 1] -= amount;
-        _balance[_registeredIndex(to)] += amount;
-
         emit Transfer(from, to, amount);
-        return true;
     }
 
     /**
@@ -105,7 +114,8 @@ contract TrabalhoERC20 is IERC20 {
      * @dev Triggers a {IERC20-Transfer} event.
      */
     function transfer(address to, uint256 amount) external returns (bool success) {
-        return _transfer(msg.sender, to, amount);
+        _transfer(msg.sender, to, amount);
+        return true;
     }
 
     /**
@@ -119,15 +129,12 @@ contract TrabalhoERC20 is IERC20 {
      * @dev Triggers a {IERC20-Transfer} event.
      */
     function transferFrom(address from, address to, uint256 amount) external returns (bool success) {
-        if (_allowed[from][msg.sender] < amount) {
-            return false;
-        }
-        success = _transfer(from, to, amount);
-        if (success) {
-            // REVIEW: is it safe to do after _transfer?
-            _allowed[from][msg.sender] -= amount;
-        }
-        return success;
+        uint256 allowed = _allowed[from][msg.sender];
+        require(allowed >= amount, InsufficientAllowance(from, msg.sender, allowed, amount));
+
+        _transfer(from, to, amount);
+        _allowed[from][msg.sender] = allowed - amount;
+        return true;
     }
 
     /**
@@ -135,9 +142,7 @@ contract TrabalhoERC20 is IERC20 {
      * @dev Triggers an {IERC20-Approval} event.
      */
     function approve(address spender, uint256 amount) external returns (bool success) {
-        // REVIEW: zero?
         _allowed[msg.sender][spender] = amount;
-        // REVIEW: what if spender == msg.sender?
 
         emit Approval(msg.sender, spender, amount);
         return true;
