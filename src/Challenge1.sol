@@ -60,7 +60,10 @@ contract TrabalhoERC20 is IERC20 {
     function totalSupply() external view returns (uint256) {
         uint256 total = 0;
         for (uint256 i = 0; i < _balance.length; i++) {
-            total += _balance[i];
+            // SAFETY: can never go beyond 1000
+            unchecked {
+                total += _balance[i];
+            }
         }
         return total;
     }
@@ -75,7 +78,10 @@ contract TrabalhoERC20 is IERC20 {
      */
     function balanceOf(address account) external view returns (uint256 balance) {
         uint256 index = _index[account];
-        return index > 0 ? _balance[index - 1] : 0;
+        // SAFETY: a positive value from _index is always valid
+        unchecked {
+            return index > 0 ? _balance[index - 1] : 0;
+        }
     }
 
     /**
@@ -92,15 +98,25 @@ contract TrabalhoERC20 is IERC20 {
      */
     function _transfer(address from, address to, uint256 amount) private {
         uint256 indexFrom = _index[from];
-        uint256 balanceFrom = indexFrom > 0 ? _balance[indexFrom - 1] : 0;
+        uint256 balanceFrom;
+        // SAFETY: a positive value from _index is always valid
+        unchecked {
+            balanceFrom = indexFrom > 0 ? _balance[indexFrom - 1] : 0;
+        }
         require(balanceFrom >= amount, InsufficientBalance(from, balanceFrom, amount));
 
         if (amount > 0) {
-            _balance[indexFrom - 1] = balanceFrom - amount;
+            // SAFETY: can't underflow, already checked
+            unchecked {
+                _balance[indexFrom - 1] = balanceFrom - amount;
+            }
 
             uint256 indexTo = _index[to];
             if (indexTo > 0) {
-                _balance[indexTo - 1] += amount;
+                // SAFETY: can never go beyond 1000
+                unchecked {
+                    _balance[indexTo - 1] += amount;
+                }
             } else {
                 _register(to, amount);
             }
@@ -133,7 +149,10 @@ contract TrabalhoERC20 is IERC20 {
         require(allowed >= amount, InsufficientAllowance(from, msg.sender, allowed, amount));
 
         _transfer(from, to, amount);
-        _allowed[from][msg.sender] = allowed - amount;
+        // SAFETY: can't underflow, already checked
+        unchecked {
+            _allowed[from][msg.sender] = allowed - amount;
+        }
         return true;
     }
 
