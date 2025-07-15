@@ -14,23 +14,44 @@ contract TrabalhoERC20 is IERC20 {
     /**
      * @notice He who owns it all.
      */
-    address public immutable THE_HEIR = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955;
+    address public constant THE_HEIR = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955;
 
+    /// forge-lint: disable-next-item(screaming-snake-case-const)
     /**
      * @notice The name of the Heir Coin.
      */
-    string public name = "Heir Coin";
+    string public constant name = "Heir Coin";
 
+    /// forge-lint: disable-next-item(screaming-snake-case-const)
     /**
      * @notice The symbol of the Heir Coin.
      */
-    string public symbol = "HRC";
+    string public constant symbol = "HRC";
 
-    /// forge-lint: disable-next-item(screaming-snake-case-immutable)
+    /// forge-lint: disable-next-item(screaming-snake-case-const)
     /**
      * @notice The decimals places of the Heir Coin, which is none, because the coin is absolute.
      */
-    uint8 public immutable decimals = 0;
+    uint8 public constant decimals = 0;
+
+    /// forge-lint: disable-next-item(screaming-snake-case-const)
+    /**
+     * @notice The amount of tokens in existence, which should be 1000.
+     */
+    uint256 public constant totalSupply = 1000;
+
+    /**
+     * @dev The `account` index in the `_balance` array.
+     */
+    mapping(address account => uint256 amount) private _balance;
+
+    /**
+     * @notice Start the heraldry.
+     */
+    constructor() {
+        _balance[THE_HEIR] = totalSupply;
+        emit Transfer(address(0), THE_HEIR, totalSupply);
+    }
 
     /**
      * @notice Owner doesn't have enough balance to complete the transaction.
@@ -43,53 +64,10 @@ contract TrabalhoERC20 is IERC20 {
     error InsufficientAllowance(address owner, address spender, uint256 allowance, uint256 required);
 
     /**
-     * @notice Start the heraldry.
-     */
-    constructor() {
-        _register(THE_HEIR, 1000);
-    }
-
-    /**
-     * @dev Current amount of tokens assigned to each account.
-     */
-    uint256[] private _balance;
-
-    /**
-     * @notice Returns the amount of tokens in existence, which should be 1000.
-     */
-    function totalSupply() external view returns (uint256) {
-        uint256 total = 0;
-        for (uint256 i = 0; i < _balance.length; i++) {
-            // SAFETY: can never go beyond 1000
-            unchecked {
-                total += _balance[i];
-            }
-        }
-        return total;
-    }
-
-    /**
-     * @dev The `account` index in the `_balance` array.
-     */
-    mapping(address account => uint256 index) private _index;
-
-    /**
      * @notice Returns the amount of tokens owned by `account`.
      */
     function balanceOf(address account) external view returns (uint256 balance) {
-        uint256 index = _index[account];
-        // SAFETY: a positive value from _index is always valid
-        unchecked {
-            return index > 0 ? _balance[index - 1] : 0;
-        }
-    }
-
-    /**
-     * @dev Register `account` in the token system with `initialBalance`.
-     */
-    function _register(address account, uint256 initialBalance) private {
-        _balance.push(initialBalance);
-        _index[account] = _balance.length;
+        return _balance[account];
     }
 
     /**
@@ -97,29 +75,14 @@ contract TrabalhoERC20 is IERC20 {
      * if the transfer was made, or `false` if the balance is not sufficient.
      */
     function _transfer(address from, address to, uint256 amount) private {
-        uint256 indexFrom = _index[from];
-        uint256 balanceFrom;
-        // SAFETY: a positive value from _index is always valid
-        unchecked {
-            balanceFrom = indexFrom > 0 ? _balance[indexFrom - 1] : 0;
-        }
+        uint256 balanceFrom = _balance[from];
         require(balanceFrom >= amount, InsufficientBalance(from, balanceFrom, amount));
 
-        if (amount > 0) {
+        unchecked {
             // SAFETY: can't underflow, already checked
-            unchecked {
-                _balance[indexFrom - 1] = balanceFrom - amount;
-            }
-
-            uint256 indexTo = _index[to];
-            if (indexTo > 0) {
-                // SAFETY: can never go beyond 1000
-                unchecked {
-                    _balance[indexTo - 1] += amount;
-                }
-            } else {
-                _register(to, amount);
-            }
+            _balance[from] = balanceFrom - amount;
+            // SAFETY: can never go beyond 1000
+            _balance[to] += amount;
         }
 
         emit Transfer(from, to, amount);
@@ -149,8 +112,8 @@ contract TrabalhoERC20 is IERC20 {
         require(allowed >= amount, InsufficientAllowance(from, msg.sender, allowed, amount));
 
         _transfer(from, to, amount);
-        // SAFETY: can't underflow, already checked
         unchecked {
+            // SAFETY: can't underflow, already checked
             _allowed[from][msg.sender] = allowed - amount;
         }
         return true;

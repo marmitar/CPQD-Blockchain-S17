@@ -19,6 +19,9 @@ contract Challenge1Test is Test {
      * @dev Runs before each test case. Useful for cleaning up left-over state.
      */
     function setUp() external {
+        vm.expectEmit(1);
+        emit IERC20.Transfer(address(0), 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 1000);
+
         hrc = new TrabalhoERC20();
     }
 
