@@ -93,7 +93,7 @@ contract TrabalhoERC20 is IERC20 {
             return false;
         }
 
-        _balance[indexFrom] -= amount;
+        _balance[indexFrom - 1] -= amount;
         _balance[_registeredIndex(to)] += amount;
 
         emit Transfer(from, to, amount);
@@ -137,6 +137,7 @@ contract TrabalhoERC20 is IERC20 {
     function approve(address spender, uint256 amount) external returns (bool success) {
         // REVIEW: zero?
         _allowed[msg.sender][spender] = amount;
+        // REVIEW: what if spender == msg.sender?
 
         emit Approval(msg.sender, spender, amount);
         return true;
