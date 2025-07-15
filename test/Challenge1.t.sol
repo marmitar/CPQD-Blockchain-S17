@@ -2,6 +2,8 @@
 pragma solidity ^0.8.27;
 
 import { Test } from "forge-std/Test.sol";
+/// forge-lint: disable-next-item(unused-import)
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
 import { TrabalhoERC20 } from "../src/Challenge1.sol";
 
@@ -55,6 +57,9 @@ contract Challenge1Test is Test {
         address owner = hrc.THE_HEIR();
         assertEq(hrc.allowance(owner, spender), 0);
 
+        vm.expectEmit(address(hrc), 1);
+        emit IERC20.Approval(owner, spender, value);
+
         vm.prank(owner);
         hrc.approve(spender, value);
 
@@ -67,6 +72,9 @@ contract Challenge1Test is Test {
     function testFuzz_Transfer(address to, uint16 amount) external {
         vm.assume(amount <= 1000);
         address owner = hrc.THE_HEIR();
+
+        vm.expectEmit(address(hrc), 1);
+        emit IERC20.Transfer(owner, to, amount);
 
         vm.prank(owner);
         assertTrue(hrc.transfer(to, amount));
@@ -87,8 +95,14 @@ contract Challenge1Test is Test {
         address owner = hrc.THE_HEIR();
         address spender = address(this);
 
+        vm.expectEmit(address(hrc), 1);
+        emit IERC20.Approval(owner, spender, approval);
+
         vm.prank(owner);
         assertTrue(hrc.approve(spender, approval));
+
+        vm.expectEmit(address(hrc), 1);
+        emit IERC20.Transfer(owner, to, amount);
 
         assertTrue(hrc.transferFrom(owner, to, amount));
         assertEq(hrc.allowance(owner, spender), approval - amount);
@@ -111,6 +125,9 @@ contract Challenge1Test is Test {
         uint256 amount = initialBalance + 1;
         vm.assume(to != owner);
 
+        vm.expectEmit(address(hrc), 0);
+        emit IERC20.Transfer(owner, to, amount);
+
         vm.expectRevert(
             abi.encodeWithSelector(TrabalhoERC20.InsufficientBalance.selector, owner, initialBalance, amount)
         );
@@ -132,8 +149,14 @@ contract Challenge1Test is Test {
         uint256 approval = amount - 1;
         vm.assume(spender != owner);
 
+        vm.expectEmit(address(hrc), 1);
+        emit IERC20.Approval(owner, spender, approval);
+
         vm.prank(owner);
         assertTrue(hrc.approve(spender, approval));
+
+        vm.expectEmit(address(hrc), 0);
+        emit IERC20.Transfer(owner, to, amount);
 
         vm.expectRevert(
             abi.encodeWithSelector(TrabalhoERC20.InsufficientAllowance.selector, owner, spender, approval, amount)
@@ -156,8 +179,14 @@ contract Challenge1Test is Test {
         uint256 approval = bound(amount, 0, type(uint256).max - 1) + 1;
         vm.assume(spender != owner);
 
+        vm.expectEmit(address(hrc), 1);
+        emit IERC20.Approval(owner, spender, approval);
+
         vm.prank(owner);
         assertTrue(hrc.approve(spender, approval));
+
+        vm.expectEmit(address(hrc), 0);
+        emit IERC20.Transfer(owner, to, amount);
 
         vm.expectRevert(
             abi.encodeWithSelector(TrabalhoERC20.InsufficientBalance.selector, owner, hrc.totalSupply(), amount)
