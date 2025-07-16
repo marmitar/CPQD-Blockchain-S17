@@ -1,5 +1,5 @@
-# @title Calculate the integer approximation for area the of a circle of radius $0 \leq r < 2^{16}$.
-# @author Tiago de Paula <tiagodepalves@gmail.com>
+## @title Calculate the integer approximation for area the of a circle of radius $0 \leq r < 2^{16}$.
+## @author Tiago de Paula <tiagodepalves@gmail.com>
 push0
 calldataload
 
