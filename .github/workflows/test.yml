@@ -51,7 +51,15 @@ jobs:
           forge build --sizes
         id: build
 
-      - name: Forge test
+      - name: Forge coverage
         run: |
-          forge test -vvv
+          echo '```log' >> $GITHUB_STEP_SUMMARY
+          forge coverage --summary --detailed >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        id: coverage
+
+      - name: Forge test
+        if: ${{ failure() }}
+        run: |
+          forge test -vvvv
         id: test

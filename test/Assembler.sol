@@ -24,16 +24,16 @@ using Runnable for RuntimeContract;
  */
 library Runnable {
     /**
-     * @notice {RuntimeContract} execution was not successful.
+     * @notice {RuntimeContract} execution reverted.
      */
-    error ExecutionFailed();
+    error ExecutionReverted();
 
     /**
      * @notice Executes the {RuntimeContract} and verify successful exection. Input and output unaltered.
      */
     function run(RuntimeContract code, bytes memory input) external returns (bytes memory output) {
         (bool success, bytes memory result) = RuntimeContract.unwrap(code).call(input);
-        require(success, ExecutionFailed());
+        require(success, ExecutionReverted());
         return result;
     }
 }
@@ -86,12 +86,18 @@ abstract contract Assembler is TestBase {
     uint256 internal constant GENERIC_CONSTRUCTOR_BYTECODE_LEN = 11;
 
     /**
+     * @dev Runtime code is empty.
+     */
+    error EmptyBytecode();
+
+    /**
      * @notice Create a new contract with `bytecode`. It appends `GENERIC_CONSTRUCTOR_BYTECODE` to deploy the contract.
      *
      * @dev From <https://github.com/Lohann/trabalho-seguranca-evm/blob/master/src/LowLevelUtils.sol>.
      */
-    function create(bytes memory bytecode) private returns (RuntimeContract runtime) {
-        require(bytecode.length > 0, "runtime code is empty");
+    function create(bytes memory bytecode) internal returns (RuntimeContract runtime) {
+        require(bytecode.length > 0, EmptyBytecode());
+
         // This code is memory safe because it alters then restores the memory
         assembly ("memory-safe") {
             // load bytecode.length
@@ -135,5 +141,38 @@ contract AssemblerTest is Assembler, Test {
         RuntimeContract runtime = load(IDENTITY);
         bytes memory input = abi.encodePacked(value);
         assertEq(runtime.run(input), input);
+    }
+
+    /**
+     * @dev Empty byte array.
+     */
+    bytes constant NODATA = new bytes(0);
+
+    /**
+     * @dev Forbid empty contracts after `GENERIC_CONSTRUCTOR_BYTECODE`.
+     */
+    /// forge-config: default.allow_internal_expect_revert = true
+    function test_RevertIf_ContractIsEmpty() external {
+        assertEq(NODATA.length, 0);
+
+        vm.expectRevert(Assembler.EmptyBytecode.selector);
+        RuntimeContract failed = create(NODATA);
+
+        assertEq(RuntimeContract.unwrap(failed), address(0));
+    }
+
+    /**
+     * @dev Hexadecimal value of the `REVERT` instruction.
+     */
+    bytes1 private constant REVERT_BYTECODE = 0xfd;
+
+    /**
+     * @dev Check that a revert in the bytecode causes an {ExecutionReverted} error.
+     */
+    function test_RevertIf_BytecodeReverts() external {
+        RuntimeContract runtime = create(abi.encodePacked(REVERT_BYTECODE));
+
+        vm.expectRevert(Runnable.ExecutionReverted.selector);
+        assertEq(runtime.run(NODATA), NODATA);
     }
 }

@@ -122,7 +122,7 @@ contract Challenge1Test is Test {
     /**
      * @notice Checks that {TrabalhoERC20-transfer} fails when {TrabalhoERC20-balanceOf} is insufficient.
      */
-    function testFuzz_FailTransferInsufficientBalance(address owner) external {
+    function testFuzz_RevertIf_TransferInsufficientBalance(address owner) external {
         uint256 initialBalance = owner == hrc.THE_HEIR() ? 1000 : 0;
         address to = address(this);
         uint256 amount = initialBalance + 1;
@@ -145,7 +145,7 @@ contract Challenge1Test is Test {
     /**
      * @notice Checks that {TrabalhoERC20-transferFrom} fails when {TrabalhoERC20-allowance} is insufficient.
      */
-    function testFuzz_FailTransferFromInsufficientAllowance(address to, uint256 amount) external {
+    function testFuzz_RevertIf_TransferFromInsufficientAllowance(address to, uint256 amount) external {
         vm.assume(amount > 0);
         address owner = hrc.THE_HEIR();
         address spender = address(this);
@@ -175,7 +175,7 @@ contract Challenge1Test is Test {
     /**
      * @notice Checks that {TrabalhoERC20-transferFrom} fails when {TrabalhoERC20-balanceOf} is insufficient.
      */
-    function testFuzz_FailTransferFromInsufficientBalance(address to, uint256 amount) external {
+    function testFuzz_RevertIf_TransferFromInsufficientBalance(address to, uint256 amount) external {
         vm.assume(amount > 1000);
         address owner = hrc.THE_HEIR();
         address spender = address(this);
