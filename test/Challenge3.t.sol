@@ -1,26 +1,29 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.27;
 
+import { Assembler, Runnable, RuntimeContract } from "./Assembler.sol";
 import { Test } from "forge-std/Test.sol";
 import { sqrt } from "prb-math/Common.sol";
 
-import { Challenge3 } from "../src/Challenge3.sol";
+using Runnable for RuntimeContract;
 
 /**
  * @title Unit tests for the Integer Square Root contract.
  * @author Tiago de Paula <tiagodepalves@gmail.com>
  */
-contract Challenge3Test is Test {
+contract Challenge3Test is Assembler, Test {
     /**
-     * @dev Integer Square Root contract, done in EVM bytecode (TODO).
+     * @dev Integer Square Root contract, done in EVM bytecode.
      */
-    Challenge3 private challenge3 = new Challenge3();
+    RuntimeContract private challenge3 = load("src/Challenge3.etk");
 
     /**
      * @dev Execute `challenge3` to find the integer square root of `x`.
      */
     function run(uint256 x) private returns (uint256 root) {
-        return challenge3.isqrtH(x);
+        bytes memory result = challenge3.run(abi.encode(x));
+        require(result.length == 32);
+        return abi.decode(result, (uint256));
     }
 
     /**
