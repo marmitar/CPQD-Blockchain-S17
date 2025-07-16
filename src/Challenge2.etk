@@ -2,6 +2,7 @@
 # @author Tiago de Paula <tiagodepalves@gmail.com>
 push0
 calldataload
+
 # calculate $r^2$
 dup1
 mul
@@ -13,6 +14,7 @@ add
 push28 0x0d8656913b7b544056da0cfaaf6439d8e836a4efca1917f26d1ee493
 swap1
 div
+
 # return
 push0
 mstore

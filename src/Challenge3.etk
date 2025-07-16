@@ -3,6 +3,7 @@
 # @notice Based on <https://github.com/PaulRBerg/prb-math/blob/v4.1.0/src/Common.sol#L587-L675>.
 push0
 calldataload
+## Stack: x
 
 ## Special case for 0, to avoid division by zero.
 dup1

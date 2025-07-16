@@ -10,7 +10,7 @@ ffi = true
 no_match_coverage = "script"
 # for deploy
 optimizer = true
-optimizer-runs = 200
+optimizer-runs = 20_000
 extra-output-files = [
   'metadata',
   'ir',

@@ -22,7 +22,13 @@ using Runnable for RuntimeContract;
  * @author Tiago de Paula <tiagodepalves@gmail.com>
  * @dev Based on <https://github.com/Analog-Labs/evm-interpreter/blob/main/src/utils/InterpreterUtils.sol>.
  */
+/// forge-config: default.optimizer-runs = 200000
 library Runnable {
+    /**
+     * @dev Pre-defined gas limit for bytecode contracts.
+     */
+    uint256 private constant DEFAULT_GAS_LIMIT = 100_000;
+
     /**
      * @notice {RuntimeContract} execution reverted.
      */
@@ -33,7 +39,7 @@ library Runnable {
      */
     function run(RuntimeContract code, bytes memory input) public returns (bytes memory output) {
         address deployedCode = RuntimeContract.unwrap(code);
-        (bool success, bytes memory result) = deployedCode.call(input);
+        (bool success, bytes memory result) = deployedCode.call{ gas: DEFAULT_GAS_LIMIT }(input);
         require(success, ExecutionReverted());
         return result;
     }
