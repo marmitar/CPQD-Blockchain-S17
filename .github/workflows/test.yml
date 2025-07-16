@@ -13,6 +13,24 @@ jobs:
     name: Foundry Tests
     runs-on: ubuntu-latest
     steps:
+      - uses: dtolnay/rust-toolchain@stable
+        id: cargo
+
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          key: ${{ runner.os }}-cargo-${{ steps.cargo.outputs.cachekey }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-
+          path: |
+            ~/.cargo
+
+      - name: Install etk assembler
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          cargo install --profile release --features cli --locked etk-asm
+
       - uses: actions/checkout@v4
         with:
           submodules: recursive
