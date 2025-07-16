@@ -15,48 +15,39 @@ contract Challenge2Test is Assembler, Test {
     /**
      * @dev Circle area calculation, done in EVM bytecode.
      */
-    RuntimeContract private challenge2 = load("src/Challenge2.etk");
-
-    /**
-     * @dev Execute `challenge2` to find the approximate area of a circle.
-     */
-    function run(uint16 radius) private returns (uint256 area) {
-        bytes memory result = challenge2.run(abi.encode(radius));
-        require(result.length == 32);
-        return abi.decode(result, (uint256));
-    }
+    RuntimeContract private immutable CIRCLE_AREA = load("src/Challenge2.etk");
 
     /**
      * @notice Examples from the challenge definition.
      */
     function test_CircleAreaExamples() external {
-        assertEq(run(4), 50);
-        assertEq(run(2), 13);
+        assertEq(CIRCLE_AREA.run(4), 50);
+        assertEq(CIRCLE_AREA.run(2), 13);
     }
 
     /**
      * @notice All powers of ten for 16-bit.
      */
     function test_CircleAreaPowersOfTen() external {
-        assertEq(run(0), 0);
-        assertEq(run(1), 3);
-        assertEq(run(10), 314);
-        assertEq(run(100), 31_416);
-        assertEq(run(1000), 3_141_593);
-        assertEq(run(10_000), 314_159_265);
+        assertEq(CIRCLE_AREA.run(0), 0);
+        assertEq(CIRCLE_AREA.run(1), 3);
+        assertEq(CIRCLE_AREA.run(10), 314);
+        assertEq(CIRCLE_AREA.run(100), 31_416);
+        assertEq(CIRCLE_AREA.run(1000), 3_141_593);
+        assertEq(CIRCLE_AREA.run(10_000), 314_159_265);
     }
 
     /**
      * @notice Guarantee that even the largest input radius can't overflow.
      */
     function test_CircleAreaNoOverflow() external {
-        assertEq(run(65_535), 13_492_625_933);
+        assertEq(CIRCLE_AREA.run(65_535), 13_492_625_933);
     }
 
     /**
      * @notice Precise implementation using `prb-math`.
      */
-    function circleArea(uint256 radius) private pure returns (uint256 area) {
+    function circleArea(uint256 radius) private noGasMetering returns (uint256 area) {
         UD60x18 uArea = convert(radius).powu(2).mul(PI);
         return convert(uArea.add(ud(0.5e18)));
     }
@@ -65,6 +56,6 @@ contract Challenge2Test is Assembler, Test {
      * @dev Fuzz testing, comparing to a precise implementation.
      */
     function testFuzz_CircleArea(uint16 radius) external {
-        assertEq(run(radius), circleArea(radius));
+        assertEq(CIRCLE_AREA.run(radius), circleArea(radius));
     }
 }

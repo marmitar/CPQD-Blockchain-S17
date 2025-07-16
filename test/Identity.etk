@@ -1,6 +1,8 @@
-# f(x) = x
+## f(x) = x
+# x := calldata
 push0
 calldataload
+# return x
 push0
 mstore
 push1 0x20

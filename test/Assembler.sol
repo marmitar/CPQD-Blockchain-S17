@@ -31,10 +31,25 @@ library Runnable {
     /**
      * @notice Executes the {RuntimeContract} and verify successful exection. Input and output unaltered.
      */
-    function run(RuntimeContract code, bytes memory input) external returns (bytes memory output) {
-        (bool success, bytes memory result) = RuntimeContract.unwrap(code).call(input);
+    function run(RuntimeContract code, bytes memory input) public returns (bytes memory output) {
+        address deployedCode = RuntimeContract.unwrap(code);
+        (bool success, bytes memory result) = deployedCode.call(input);
         require(success, ExecutionReverted());
         return result;
+    }
+
+    /**
+     * @notice {RuntimeContract} returned a different number of outputs.
+     */
+    error MismatchedOutput();
+
+    /**
+     * @notice Executes the {RuntimeContract} assuming a single 32-bit input and output.
+     */
+    function run(RuntimeContract code, uint256 input) external returns (uint256 output) {
+        bytes memory result = run(code, abi.encode(input));
+        require(result.length == 32, MismatchedOutput());
+        return abi.decode(result, (uint256));
     }
 }
 
@@ -139,8 +154,7 @@ contract AssemblerTest is Assembler, Test {
      */
     function testFuzz_BytecodeRuns(uint256 value) external {
         RuntimeContract runtime = load(IDENTITY);
-        bytes memory input = abi.encodePacked(value);
-        assertEq(runtime.run(input), input);
+        assertEq(runtime.run(value), value);
     }
 
     /**

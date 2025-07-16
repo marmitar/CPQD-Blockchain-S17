@@ -15,52 +15,50 @@ contract Challenge3Test is Assembler, Test {
     /**
      * @dev Integer Square Root contract, done in EVM bytecode.
      */
-    RuntimeContract private challenge3 = load("src/Challenge3.etk");
-
-    /**
-     * @dev Execute `challenge3` to find the integer square root of `x`.
-     */
-    function run(uint256 x) private returns (uint256 root) {
-        bytes memory result = challenge3.run(abi.encode(x));
-        require(result.length == 32);
-        return abi.decode(result, (uint256));
-    }
+    RuntimeContract private immutable SQRT = load("src/Challenge3.etk");
 
     /**
      * @notice Examples from the challenge definition.
      */
     function test_SqrtExample() external {
-        assertEq(run(5), 2);
+        assertEq(SQRT.run(5), 2);
     }
 
     /**
      * @notice Selected corner cases.
      */
     function test_SqrtSelectedCases() external {
-        assertEq(run(0), 0);
-        assertEq(run(1), 1);
-        assertEq(run(10), 3);
-        assertEq(run(99), 9);
-        assertEq(run(100), 10);
-        assertEq(run(101), 10);
+        assertEq(SQRT.run(0), 0);
+        assertEq(SQRT.run(1), 1);
+        assertEq(SQRT.run(10), 3);
+        assertEq(SQRT.run(99), 9);
+        assertEq(SQRT.run(100), 10);
+        assertEq(SQRT.run(101), 10);
     }
 
     /**
      * @notice Casacading effect of square root on powers of two.
      */
     function test_CircleAreaPowersOfTwo() external {
-        assertEq(run(type(uint16).max), type(uint8).max);
-        assertEq(run(type(uint32).max), type(uint16).max);
-        assertEq(run(type(uint64).max), type(uint32).max);
-        assertEq(run(type(uint128).max), type(uint64).max);
-        assertEq(run(type(uint256).max), type(uint128).max);
+        assertEq(SQRT.run(type(uint16).max), type(uint8).max);
+        assertEq(SQRT.run(type(uint32).max), type(uint16).max);
+        assertEq(SQRT.run(type(uint64).max), type(uint32).max);
+        assertEq(SQRT.run(type(uint128).max), type(uint64).max);
+        assertEq(SQRT.run(type(uint256).max), type(uint128).max);
+    }
+
+    /**
+     * @notice Precise implementation using `prb-math`.
+     */
+    function isqrt(uint256 x) private noGasMetering returns (uint256 root) {
+        return sqrt(x);
     }
 
     /**
      * @dev Fuzz testing, comparing to a precise implementation.
      */
     function testFuzz_Sqrt(uint256 x) external {
-        assertEq(run(x), sqrt(x));
+        assertEq(SQRT.run(x), isqrt(x));
     }
 
     /**
@@ -75,6 +73,6 @@ contract Challenge3Test is Assembler, Test {
      */
     function testFuzz_SqrtBig(uint256 input) external {
         uint256 x = shuffleUint256(input);
-        assertEq(run(x), sqrt(x));
+        assertEq(SQRT.run(x), isqrt(x));
     }
 }
