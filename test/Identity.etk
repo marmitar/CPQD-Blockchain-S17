@@ -1,0 +1,8 @@
+# f(x) = x
+push0
+calldataload
+push0
+mstore
+push1 0x20
+push0
+return

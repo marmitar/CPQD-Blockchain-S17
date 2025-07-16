@@ -1,9 +1,12 @@
 # See https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 [profile.default]
 src = 'src'
+evm_version = "cancun"
 # for development
 out = 'out'
 libs = ['lib']
+fs_permissions = [{ access = "read", path = "src/"}]
+ffi = true
 # for deploy
 optimizer = true
 optimizer-runs = 200
