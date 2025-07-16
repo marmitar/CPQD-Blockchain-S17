@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import { Assembler, Runnable, RuntimeContract } from "./Assembler.sol";
 import { Test } from "forge-std/Test.sol";
+import { PI, UD60x18, convert, ud } from "prb-math/UD60x18.sol";
 
 using Runnable for RuntimeContract;
 
@@ -53,13 +54,17 @@ contract Challenge2Test is Assembler, Test {
     }
 
     /**
-     * @dev Fuzz testing, assuming the area is always between $3 r^2$ and $4 r^2$.
+     * @notice Precise implementation using `prb-math`.
+     */
+    function circleArea(uint256 radius) private pure returns (uint256 area) {
+        UD60x18 uArea = convert(radius).powu(2).mul(PI);
+        return convert(uArea.add(ud(0.5e18)));
+    }
+
+    /**
+     * @dev Fuzz testing, comparing to a precise implementation.
      */
     function testFuzz_CircleArea(uint16 radius) external {
-        vm.assume(radius > 0);
-
-        uint256 area = run(radius);
-        assertGe(area, 3 * uint256(radius) ** 2);
-        assertLt(area, 4 * uint256(radius) ** 2);
+        assertEq(run(radius), circleArea(radius));
     }
 }
