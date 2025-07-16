@@ -61,5 +61,5 @@ jobs:
       - name: Forge test
         if: ${{ failure() }}
         run: |
-          forge test -vvvv
+          forge test -vvv
         id: test

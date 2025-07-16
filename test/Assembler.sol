@@ -130,14 +130,14 @@ contract AssemblerTest is Assembler, Test {
     /**
      * @dev Verify that it assembles into the expected binary.
      */
-    function test_Assembles() external {
+    function test_AssemblesBytecode() external {
         assertEq(assemble(IDENTITY), hex"5f_35_5f_52_60_20_5f_f3");
     }
 
     /**
      * @dev Verify that it returns the input value unchanged.
      */
-    function testFuzz_Runs(uint256 value) external {
+    function testFuzz_BytecodeRuns(uint256 value) external {
         RuntimeContract runtime = load(IDENTITY);
         bytes memory input = abi.encodePacked(value);
         assertEq(runtime.run(input), input);

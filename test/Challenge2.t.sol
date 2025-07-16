@@ -37,6 +37,7 @@ contract Challenge2Test is Assembler, Test {
      * @notice All powers of ten for 16-bit.
      */
     function test_CircleAreaPowersOfTen() external {
+        assertEq(run(0), 0);
         assertEq(run(1), 3);
         assertEq(run(10), 314);
         assertEq(run(100), 31_416);
@@ -55,6 +56,8 @@ contract Challenge2Test is Assembler, Test {
      * @dev Fuzz testing, assuming the area is always between $3 r^2$ and $4 r^2$.
      */
     function testFuzz_CircleArea(uint16 radius) external {
+        vm.assume(radius > 0);
+
         uint256 area = run(radius);
         assertGe(area, 3 * uint256(radius) ** 2);
         assertLt(area, 4 * uint256(radius) ** 2);
