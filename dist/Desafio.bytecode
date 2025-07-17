@@ -4,84 +4,84 @@
 
 /// Find an appropriate position and then jump to the normalization table.
 // gas congruence: G+8
-push1 0x16
+PUSH1 0x16
 // gas congruence: G+5
-push1 0x16
+PUSH1 0x16
 // gas congruence: G+2
-gas
+GAS
 // gas congruence: G = G+22
-mod
+MOD
 // gas congruence: G-5 = G+17
 /// Here we need an offset such that `(G+OFFSET) % 22 = (G-30) % 22`
-push1 0x0e
+PUSH1 0x0e
 // gas congruence: G-8 = G+14
-add
+ADD
 // gas congruence: G-11 = G+11
-mod
+MOD
 // gas congruence: G-16 = G+6
-push1 0x23
+PUSH1 0x23
 // gas congruence: G-19 = G+3
-sub
+SUB
 // gas congruence: G-22 = G+0
-jump
+JUMP
 // gas congruence: G-30 = G+14
 
 /// Normalization table that consumes enough gas such that `gas % 22 == 0` at the `burn` loop
 // gas congruence: 21
-jumpdest
+JUMPDEST
 // gas congruence: 20
-jumpdest
+JUMPDEST
 // gas congruence: 19
-jumpdest
+JUMPDEST
 // gas congruence: 18
-jumpdest
+JUMPDEST
 // gas congruence: 17
-jumpdest
+JUMPDEST
 // gas congruence: 16
-jumpdest
+JUMPDEST
 // gas congruence: 15
-jumpdest
+JUMPDEST
 // gas congruence: 14
-jumpdest
+JUMPDEST
 // gas congruence: 13
-jumpdest
+JUMPDEST
 // gas congruence: 12
-jumpdest
+JUMPDEST
 // gas congruence: 11
-jumpdest
+JUMPDEST
 // gas congruence: 10
-jumpdest
+JUMPDEST
 // gas congruence: 9
-jumpdest
+JUMPDEST
 // gas congruence: 8
-jumpdest
+JUMPDEST
 // gas congruence: 7
-jumpdest
+JUMPDEST
 // gas congruence: 6
-jumpdest
+JUMPDEST
 // gas congruence: 5
-jumpdest
+JUMPDEST
 // gas congruence: 4
-jumpdest
+JUMPDEST
 // gas congruence: 3
-jumpdest
+JUMPDEST
 // gas congruence: 2
-jumpdest
+JUMPDEST
 // gas congruence: 1
-jumpdest
+JUMPDEST
 
 /// Should reach here with `gas % 22 == 0`, otherwise this loop will never end and the contract will fail
 // gas congruence: 22
-jumpdest
+JUMPDEST
 // gas congruence: 21
-push1 0x10
+PUSH1 0x10
 // gas congruence: 18
-gas
+GAS
 // gas congruence: 16
-gt
+GT
 // gas congruence: 13
-push1 0x23
+PUSH1 0x23
 // gas congruence: 10
-jumpi
+JUMPI
 // gas congruence: 0
-stop
+STOP

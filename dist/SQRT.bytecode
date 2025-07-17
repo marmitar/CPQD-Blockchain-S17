@@ -2,196 +2,196 @@
 /// @author Tiago de Paula <tiagodepalves@gmail.com>
 /// @notice Calculate the integer square root $0 \leq n < 2^{256}$.
 /// @dev Based on <https://github.com/PaulRBerg/prb-math/blob/v4.1.0/src/Common.sol#L587-L675>.
-push0
-calldataload
+PUSH0
+CALLDATALOAD
 /// Stack: x
 
 /// Special case for 0, to avoid division by zero.
-dup1
-iszero
-push1 0xd1
-jumpi
+DUP1
+ISZERO
+PUSH1 0xd1
+JUMPI
 /// Stack: x
 
 /// Find the closest power of two: $x_0 = 2^{\lfloor \log_2(x) / 2 \rfloor}$.
 // xAux = x
-dup1
+DUP1
 // result = 1
-push1 1
+PUSH1 0x01
 // if (xAux >= 2 ** 128)
-dup2
-push17 0x0100000000000000000000000000000000
-gt
-push1 0x29
-jumpi
+DUP2
+PUSH17 0x0100000000000000000000000000000000
+GT
+PUSH1 0x29
+JUMPI
     // xAux >>= 128
-    swap1
-    push1 0x80
-    shr
+    SWAP1
+    PUSH1 0x80
+    SHR
     // result <<= 64
-    swap1
-    push1 0x40
-    shl
-jumpdest
+    SWAP1
+    PUSH1 0x40
+    SHL
+JUMPDEST
 // if (xAux >= 2 ** 64)
-dup2
-push9 0x010000000000000000
-gt
-push1 0x41
-jumpi
+DUP2
+PUSH9 0x010000000000000000
+GT
+PUSH1 0x41
+JUMPI
     // xAux >>= 64
-    swap1
-    push1 0x40
-    shr
+    SWAP1
+    PUSH1 0x40
+    SHR
     // result <<= 32
-    swap1
-    push1 0x20
-    shl
-jumpdest
+    SWAP1
+    PUSH1 0x20
+    SHL
+JUMPDEST
 // if (xAux >= 2 ** 32)
-dup2
-push5 0x0100000000
-gt
-push1 0x55
-jumpi
+DUP2
+PUSH5 0x0100000000
+GT
+PUSH1 0x55
+JUMPI
     // xAux >>= 32
-    swap1
-    push1 0x20
-    shr
+    SWAP1
+    PUSH1 0x20
+    SHR
     // result <<= 16
-    swap1
-    push1 0x10
-    shl
-jumpdest
+    SWAP1
+    PUSH1 0x10
+    SHL
+JUMPDEST
 // if (xAux >= 2 ** 16)
-dup2
-push3 0x010000
-gt
-push1 0x67
-jumpi
+DUP2
+PUSH3 0x010000
+GT
+PUSH1 0x67
+JUMPI
     // xAux >>= 16
-    swap1
-    push1 0x10
-    shr
+    SWAP1
+    PUSH1 0x10
+    SHR
     // result <<= 8
-    swap1
-    push1 0x08
-    shl
-jumpdest
+    SWAP1
+    PUSH1 0x08
+    SHL
+JUMPDEST
 // if (xAux >= 2 ** 8)
-dup2
-push2 0x0100
-gt
-push1 0x78
-jumpi
+DUP2
+PUSH2 0x0100
+GT
+PUSH1 0x78
+JUMPI
     // xAux >>= 8
-    swap1
-    push1 0x08
-    shr
+    SWAP1
+    PUSH1 0x08
+    SHR
     // result <<= 4
-    swap1
-    push1 0x04
-    shl
-jumpdest
+    SWAP1
+    PUSH1 0x04
+    SHL
+JUMPDEST
 // if (xAux >= 2 ** 4)
-dup2
-push1 0x10
-gt
-push1 0x88
-jumpi
+DUP2
+PUSH1 0x10
+GT
+PUSH1 0x88
+JUMPI
     // xAux >>= 4
-    swap1
-    push1 0x04
-    shr
+    SWAP1
+    PUSH1 0x04
+    SHR
     // result <<= 2
-    swap1
-    push1 0x02
-    shl
-jumpdest
+    SWAP1
+    PUSH1 0x02
+    SHL
+JUMPDEST
 // if (xAux >= 2 ** 2)
-swap1
-push1 0x04
-gt
-push1 0x93
-jumpi
+SWAP1
+PUSH1 0x04
+GT
+PUSH1 0x93
+JUMPI
     // result <<= 1
-    push1 0x01
-    shl
-jumpdest
+    PUSH1 0x01
+    SHL
+JUMPDEST
 /// Stack: result, x
 
 /// Now we have 1 bit correct of $\sqrt{x}$. The next 7 iterations of Newton's method will expand it into 256 bits.
 // 1: result = (result + x / result) >> 1
-dup1
-dup3
-div
-add
-push1 0x01
-shr
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 0x01
+SHR
 // 2: result = (result + x / result) >> 1
-dup1
-dup3
-div
-add
-push1 0x01
-shr
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 0x01
+SHR
 // 3: result = (result + x / result) >> 1
-dup1
-dup3
-div
-add
-push1 0x01
-shr
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 0x01
+SHR
 // 4: result = (result + x / result) >> 1
-dup1
-dup3
-div
-add
-push1 0x01
-shr
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 0x01
+SHR
 // 5: result = (result + x / result) >> 1
-dup1
-dup3
-div
-add
-push1 0x01
-shr
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 0x01
+SHR
 // 6: result = (result + x / result) >> 1
-dup1
-dup3
-div
-add
-push1 0x01
-shr
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 0x01
+SHR
 // 7: result = (result + x / result) >> 1
-dup1
-dup3
-div
-add
-push1 0x01
-shr
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 0x01
+SHR
 /// Stack: result, x
 
 /// If x is not a perfect square, round the result toward zero.
 // roundedResult = x / result
-dup1
-swap2
-div
+DUP1
+SWAP2
+DIV
 // if (result >= roundedResult)
-dup1
-dup3
-lt
-push1 0xcf
-jumpi
+DUP1
+DUP3
+LT
+PUSH1 0xcf
+JUMPI
     // result = roundedResult
-    swap1
-jumpdest
-pop
+    SWAP1
+JUMPDEST
+POP
 
 // return result
-jumpdest
-push0
-mstore
-push1 0x20
-push0
-return
+JUMPDEST
+PUSH0
+MSTORE
+PUSH1 0x20
+PUSH0
+RETURN
