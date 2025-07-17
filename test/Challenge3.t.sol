@@ -39,7 +39,7 @@ contract Challenge3Test is Assembler, Test {
     /**
      * @notice Casacading effect of square root on powers of two.
      */
-    function test_CircleAreaPowersOfTwo() external {
+    function test_SqrtPowersOfTwo() external {
         assertEq(SQRT.run(type(uint16).max), type(uint8).max);
         assertEq(SQRT.run(type(uint32).max), type(uint16).max);
         assertEq(SQRT.run(type(uint64).max), type(uint32).max);

@@ -63,6 +63,7 @@ contract Challenge4Test is Assembler, Test {
      */
     /// forge-config: default.fuzz.runs = 256
     function testFuzz_BurnAllGas(uint32 gasLimit) external {
+        // more than 1e9 and the test goes out of gas
         vm.assume(gasLimit >= LIMIT && gasLimit < 1e9);
 
         assertGasUsed(BURNER.runWithGasLimit(vm, gasLimit), gasLimit);
