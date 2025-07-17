@@ -1,0 +1,197 @@
+/// @title Integer Square Root.
+/// @author Tiago de Paula <tiagodepalves@gmail.com>
+/// @notice Calculate the integer square root $0 \leq n < 2^{256}$.
+/// @dev Based on <https://github.com/PaulRBerg/prb-math/blob/v4.1.0/src/Common.sol#L587-L675>.
+push0
+calldataload
+/// Stack: x
+
+/// Special case for 0, to avoid division by zero.
+dup1
+iszero
+push1 0xd1
+jumpi
+/// Stack: x
+
+/// Find the closest power of two: $x_0 = 2^{\lfloor \log_2(x) / 2 \rfloor}$.
+// xAux = x
+dup1
+// result = 1
+push1 1
+// if (xAux >= 2 ** 128)
+dup2
+push17 0x0100000000000000000000000000000000
+gt
+push1 0x29
+jumpi
+    // xAux >>= 128
+    swap1
+    push1 0x80
+    shr
+    // result <<= 64
+    swap1
+    push1 0x40
+    shl
+jumpdest
+// if (xAux >= 2 ** 64)
+dup2
+push9 0x010000000000000000
+gt
+push1 0x41
+jumpi
+    // xAux >>= 64
+    swap1
+    push1 0x40
+    shr
+    // result <<= 32
+    swap1
+    push1 0x20
+    shl
+jumpdest
+// if (xAux >= 2 ** 32)
+dup2
+push5 0x0100000000
+gt
+push1 0x55
+jumpi
+    // xAux >>= 32
+    swap1
+    push1 0x20
+    shr
+    // result <<= 16
+    swap1
+    push1 0x10
+    shl
+jumpdest
+// if (xAux >= 2 ** 16)
+dup2
+push3 0x010000
+gt
+push1 0x67
+jumpi
+    // xAux >>= 16
+    swap1
+    push1 0x10
+    shr
+    // result <<= 8
+    swap1
+    push1 0x08
+    shl
+jumpdest
+// if (xAux >= 2 ** 8)
+dup2
+push2 0x0100
+gt
+push1 0x78
+jumpi
+    // xAux >>= 8
+    swap1
+    push1 0x08
+    shr
+    // result <<= 4
+    swap1
+    push1 0x04
+    shl
+jumpdest
+// if (xAux >= 2 ** 4)
+dup2
+push1 0x10
+gt
+push1 0x88
+jumpi
+    // xAux >>= 4
+    swap1
+    push1 0x04
+    shr
+    // result <<= 2
+    swap1
+    push1 0x02
+    shl
+jumpdest
+// if (xAux >= 2 ** 2)
+swap1
+push1 0x04
+gt
+push1 0x93
+jumpi
+    // result <<= 1
+    push1 0x01
+    shl
+jumpdest
+/// Stack: result, x
+
+/// Now we have 1 bit correct of $\sqrt{x}$. The next 7 iterations of Newton's method will expand it into 256 bits.
+// 1: result = (result + x / result) >> 1
+dup1
+dup3
+div
+add
+push1 0x01
+shr
+// 2: result = (result + x / result) >> 1
+dup1
+dup3
+div
+add
+push1 0x01
+shr
+// 3: result = (result + x / result) >> 1
+dup1
+dup3
+div
+add
+push1 0x01
+shr
+// 4: result = (result + x / result) >> 1
+dup1
+dup3
+div
+add
+push1 0x01
+shr
+// 5: result = (result + x / result) >> 1
+dup1
+dup3
+div
+add
+push1 0x01
+shr
+// 6: result = (result + x / result) >> 1
+dup1
+dup3
+div
+add
+push1 0x01
+shr
+// 7: result = (result + x / result) >> 1
+dup1
+dup3
+div
+add
+push1 0x01
+shr
+/// Stack: result, x
+
+/// If x is not a perfect square, round the result toward zero.
+// roundedResult = x / result
+dup1
+swap2
+div
+// if (result >= roundedResult)
+dup1
+dup3
+lt
+push1 0xcf
+jumpi
+    // result = roundedResult
+    swap1
+jumpdest
+pop
+
+// return result
+jumpdest
+push0
+mstore
+push1 0x20
+push0
+return

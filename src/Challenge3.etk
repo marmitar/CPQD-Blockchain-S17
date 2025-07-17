@@ -1,6 +1,7 @@
-## @title Calculate the integer square root $0 \leq n < 2^{256}$.
+## @title Integer Square Root.
 ## @author Tiago de Paula <tiagodepalves@gmail.com>
-## @notice Based on <https://github.com/PaulRBerg/prb-math/blob/v4.1.0/src/Common.sol#L587-L675>.
+## @notice Calculate the integer square root $0 \leq n < 2^{256}$.
+## @dev Based on <https://github.com/PaulRBerg/prb-math/blob/v4.1.0/src/Common.sol#L587-L675>.
 push0
 calldataload
 ## Stack: x

@@ -18,6 +18,14 @@ contract Challenge3Test is Assembler, Test {
     RuntimeContract private immutable SQRT = load("src/Challenge3.etk");
 
     /**
+     * @notice Verify distributed assembly.
+     */
+    function test_SqrtAssembly() external {
+        string memory bytecode = string.concat("0x", vm.trim(vm.readFile("dist/SQRT.hex")));
+        assertEq(assemble("src/Challenge3.etk"), vm.parseBytes(bytecode));
+    }
+
+    /**
      * @notice Examples from the challenge definition.
      */
     function test_SqrtExample() external {
