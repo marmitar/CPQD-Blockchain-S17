@@ -18,6 +18,14 @@ contract Challenge4Test is Assembler, Test {
     RuntimeContract private immutable BURNER = load("src/Challenge4.etk");
 
     /**
+     * @notice Verify distributed assembly.
+     */
+    function test_BurnerAssembly() external {
+        string memory bytecode = string.concat("0x", vm.trim(vm.readFile("dist/Desafio.hex")));
+        assertEq(assemble("src/Challenge4.etk"), vm.parseBytes(bytecode));
+    }
+
+    /**
      * @notice Verifies that all gas was used, non remain.
      */
     function assertGasUsed(Vm.Gas memory usage, uint256 gasLimit) private noGasMetering {
