@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.27;
 
-import { TestBase } from "forge-std/Base.sol";
-import { Test } from "forge-std/Test.sol";
+import { Test, TestBase, Vm } from "forge-std/Test.sol";
 
 /**
  * @title Address of a dynamically assembled contract.
@@ -57,6 +56,24 @@ library Runnable {
         require(result.length == 32, MismatchedOutput());
         return abi.decode(result, (uint256));
     }
+
+    /**
+     * @dev Empty byte array.
+     */
+    bytes constant NULL = new bytes(0);
+
+    /**
+     * @notice Executes the {RuntimeContract} with the given `gasLimit` and measure `usage`.
+     */
+    function runWithGasLimit(RuntimeContract code, Vm vm, uint256 gasLimit) external returns (Vm.Gas memory usage) {
+        address deployedCode = RuntimeContract.unwrap(code);
+
+        (bool success, bytes memory result) = deployedCode.call{ gas: gasLimit }(NULL);
+        usage = vm.lastCallGas();
+
+        require(success, ExecutionReverted());
+        require(result.length == NULL.length, MismatchedOutput());
+    }
 }
 
 /**
@@ -79,7 +96,7 @@ abstract contract Assembler is TestBase {
      * @dev Assembles bytecode from file located at `pathToMnemonic` and create a new runtime contract with it.
      */
     function load(string memory pathToMnemonic) internal returns (RuntimeContract runtime) {
-        return create(assemble(pathToMnemonic));
+        return create(assemble(pathToMnemonic), pathToMnemonic);
     }
 
     /**
@@ -136,6 +153,21 @@ abstract contract Assembler is TestBase {
             mstore(bytecode, len)
         }
     }
+
+    /**
+     * @dev Label given for the {RuntimeContract} is empty.
+     */
+    error EmptyLabel();
+
+    /**
+     * @notice Create a new contract with `bytecode` and a defined `label` for debugging.
+     */
+    function create(bytes memory bytecode, string memory label) internal returns (RuntimeContract runtime) {
+        require(bytes(vm.trim(label)).length > 0, EmptyLabel());
+
+        runtime = create(bytecode);
+        vm.label(RuntimeContract.unwrap(runtime), label);
+    }
 }
 
 /**
@@ -161,22 +193,31 @@ contract AssemblerTest is Assembler, Test {
     function testFuzz_BytecodeRuns(uint256 value) external {
         RuntimeContract runtime = load(IDENTITY);
         assertEq(runtime.run(value), value);
+        assertEq(vm.getLabel(RuntimeContract.unwrap(runtime)), IDENTITY);
     }
-
-    /**
-     * @dev Empty byte array.
-     */
-    bytes constant NODATA = new bytes(0);
 
     /**
      * @dev Forbid empty contracts after `GENERIC_CONSTRUCTOR_BYTECODE`.
      */
     /// forge-config: default.allow_internal_expect_revert = true
     function test_RevertIf_ContractIsEmpty() external {
-        assertEq(NODATA.length, 0);
+        assertEq(Runnable.NULL.length, 0);
 
         vm.expectRevert(Assembler.EmptyBytecode.selector);
-        RuntimeContract failed = create(NODATA);
+        RuntimeContract failed = create(Runnable.NULL);
+
+        assertEq(RuntimeContract.unwrap(failed), address(0));
+    }
+
+    /**
+     * @dev Forbid empty debug labels, if used.
+     */
+    /// forge-config: default.allow_internal_expect_revert = true
+    function test_RevertIf_LabelIsEmpty() external {
+        bytes memory bytecode = assemble(IDENTITY);
+
+        vm.expectRevert(Assembler.EmptyLabel.selector);
+        RuntimeContract failed = create(bytecode, "           ");
 
         assertEq(RuntimeContract.unwrap(failed), address(0));
     }
@@ -190,9 +231,76 @@ contract AssemblerTest is Assembler, Test {
      * @dev Check that a revert in the bytecode causes an {ExecutionReverted} error.
      */
     function test_RevertIf_BytecodeReverts() external {
-        RuntimeContract runtime = create(abi.encodePacked(REVERT_BYTECODE));
+        RuntimeContract runtime = create(abi.encodePacked(REVERT_BYTECODE), "REVERT_BYTECODE");
 
         vm.expectRevert(Runnable.ExecutionReverted.selector);
-        assertEq(runtime.run(NODATA), NODATA);
+        assertEq(runtime.run(Runnable.NULL), Runnable.NULL);
+    }
+
+    /**
+     * @dev Hexadecimal value of the `STOP` instruction.
+     */
+    bytes1 private constant STOP_BYTECODE = 0x00;
+
+    /**
+     * @dev Check that invalid output causes an {MismatchedOutput} error.
+     */
+    function test_RevertIf_MismatchedOutputOnStop() external {
+        RuntimeContract runtime = create(abi.encodePacked(STOP_BYTECODE), "STOP_BYTECODE");
+
+        vm.expectRevert(Runnable.MismatchedOutput.selector);
+        assertEq(runtime.run(0), 0);
+    }
+
+    /**
+     * @dev Check that invalid output causes an {MismatchedOutput} error.
+     */
+    function test_StopDoesntSpendGas() external {
+        RuntimeContract runtime = create(abi.encodePacked(STOP_BYTECODE), "STOP_BYTECODE");
+        Vm.Gas memory usage = runtime.runWithGasLimit(vm, 1);
+
+        assertEq(usage.gasLimit, 1);
+        assertEq(usage.gasTotalUsed, 0);
+        assertEq(usage.gasRefunded, 0);
+        assertEq(usage.gasRemaining, 1);
+    }
+
+    /**
+     * @dev Simple bytecode that uses 33 gas.
+     *
+     *  PUSH0
+     *  PUSH0
+     *  KECCAK256
+     */
+    bytes private constant USES_33_GAS = hex"5f_5f_20";
+
+    /**
+     * @dev Check that invalid output causes an {MismatchedOutput} error.
+     */
+    function test_RevertIf_SpentTooMuchGas() external {
+        RuntimeContract runtime = create(abi.encodePacked(USES_33_GAS), "USES_33_GAS");
+
+        vm.expectRevert(Runnable.ExecutionReverted.selector);
+        Vm.Gas memory usage = runtime.runWithGasLimit(vm, 20);
+
+        assertEq(usage.gasLimit, 0);
+        assertEq(usage.gasTotalUsed, 0);
+        assertEq(usage.gasRefunded, 0);
+        assertEq(usage.gasRemaining, 0);
+    }
+
+    /**
+     * @dev Check that invalid output causes an {MismatchedOutput} error.
+     */
+    function test_RevertIf_MismatchedOutputOnIdentityGasMeasurements() external {
+        RuntimeContract runtime = load(IDENTITY);
+
+        vm.expectRevert(Runnable.MismatchedOutput.selector);
+        Vm.Gas memory usage = runtime.runWithGasLimit(vm, 100);
+
+        assertEq(usage.gasLimit, 0);
+        assertEq(usage.gasTotalUsed, 0);
+        assertEq(usage.gasRefunded, 0);
+        assertEq(usage.gasRemaining, 0);
     }
 }
