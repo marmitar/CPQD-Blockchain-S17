@@ -5,7 +5,7 @@ evm_version = "cancun"
 # for development
 out = 'out'
 libs = ['lib']
-fs_permissions = [{ access = "read", path = "src/"}]
+fs_permissions = [{ access = "read", path = "src/"}, { access = "read", path = "dist/"}]
 ffi = true
 no_match_coverage = "script"
 # for deploy
