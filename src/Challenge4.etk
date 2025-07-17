@@ -1,0 +1,88 @@
+## @title Burn 100% of your gas today!
+## @author Tiago de Paula <tiagodepalves@gmail.com>
+## @notice Requires at least `8 + 30 + 22 = 60` gas to work. Anything less than that and the contract will revert.
+
+## Find an appropriate position and then jump to the normalization table.
+# gas congruence: G+8
+push1 0x16
+# gas congruence: G+5
+push1 0x16
+# gas congruence: G+2
+gas
+# gas congruence: G = G+22
+mod
+# gas congruence: G-5 = G+17
+## Here we need an offset such that `(G+OFFSET) % 22 = (G-30) % 22`
+push1 0x0e
+# gas congruence: G-8 = G+14
+add
+# gas congruence: G-11 = G+11
+mod
+# gas congruence: G-16 = G+6
+push1 burn
+# gas congruence: G-19 = G+3
+sub
+# gas congruence: G-22 = G+0
+jump
+# gas congruence: G-30 = G+14
+
+## Normalization table that consumes enough gas such that `gas % 22 == 0` at the `burn` loop
+# gas congruence: 21
+jumpdest
+# gas congruence: 20
+jumpdest
+# gas congruence: 19
+jumpdest
+# gas congruence: 18
+jumpdest
+# gas congruence: 17
+jumpdest
+# gas congruence: 16
+jumpdest
+# gas congruence: 15
+jumpdest
+# gas congruence: 14
+jumpdest
+# gas congruence: 13
+jumpdest
+# gas congruence: 12
+jumpdest
+# gas congruence: 11
+jumpdest
+# gas congruence: 10
+jumpdest
+# gas congruence: 9
+jumpdest
+# gas congruence: 8
+jumpdest
+# gas congruence: 7
+jumpdest
+# gas congruence: 6
+jumpdest
+# gas congruence: 5
+jumpdest
+# gas congruence: 4
+jumpdest
+# gas congruence: 3
+jumpdest
+# gas congruence: 2
+jumpdest
+# gas congruence: 1
+jumpdest
+
+## Should reach here with `gas % 22 == 0`, otherwise this loop will never end and the contract will fail
+burn:
+# gas congruence: 22
+jumpdest
+# gas congruence: 21
+push1 0x10
+# gas congruence: 18
+gas
+# gas congruence: 16
+gt
+# gas congruence: 13
+push1 burn
+# gas congruence: 10
+jumpi
+# gas congruence: 0
+stop
