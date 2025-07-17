@@ -18,6 +18,14 @@ contract Challenge2Test is Assembler, Test {
     RuntimeContract private immutable CIRCLE_AREA = load("src/Challenge2.etk");
 
     /**
+     * @notice Verify distributed assembly.
+     */
+    function test_CicleAreaAssembly() external {
+        string memory bytecode = string.concat("0x", vm.trim(vm.readFile("dist/AreaCirculo.hex")));
+        assertEq(assemble("src/Challenge2.etk"), vm.parseBytes(bytecode));
+    }
+
+    /**
      * @notice Examples from the challenge definition.
      */
     function test_CircleAreaExamples() external {

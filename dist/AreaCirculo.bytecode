@@ -1,13 +1,13 @@
-## @title Circle Area.
-## @author Tiago de Paula <tiagodepalves@gmail.com>
-## @notice Calculate the integer approximation for area the of a circle of radius $0 \leq r < 2^{16}$.
+/// @title Circle Area.
+/// @author Tiago de Paula <tiagodepalves@gmail.com>
+/// @notice Calculate the integer approximation for area the of a circle of radius $0 \leq r < 2^{16}$.
 push0
 calldataload
 
-# calculate $r^2$
+// calculate $r^2$
 dup1
 mul
-# do: $(P \times r^2 + Q/2) / Q$, where $P/Q \approx \pi$
+// do: $(P \times r^2 + Q/2) / Q$, where $P/Q \approx \pi$
 push28 0x2a7d419042d27fb662d1be44f5b2fcccc28452d3feda50d76f29ab89
 mul
 push28 0x06c32b489dbdaa202b6d067d57b21cec741b5277e50c8bf9368f7249
@@ -16,7 +16,7 @@ push28 0x0d8656913b7b544056da0cfaaf6439d8e836a4efca1917f26d1ee493
 swap1
 div
 
-# return
+// return
 push0
 mstore
 push1 0x20
