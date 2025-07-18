@@ -8,5 +8,6 @@
     "*.asm": "evm-toolkit",
     "*.ir": "evm-toolkit",
     "*.iropt": "evm-toolkit",
+    "*.evm": "evm-toolkit",
   },
 }

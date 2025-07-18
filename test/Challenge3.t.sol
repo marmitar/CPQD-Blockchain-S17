@@ -15,14 +15,14 @@ contract Challenge3Test is Assembler, Test {
     /**
      * @dev Integer Square Root contract, done in EVM bytecode.
      */
-    RuntimeContract private immutable SQRT = load("src/Challenge3.etk");
+    RuntimeContract private immutable SQRT = load("src/Challenge3.evm");
 
     /**
      * @notice Verify distributed assembly.
      */
     function test_SqrtAssembly() external {
         string memory bytecode = string.concat("0x", vm.trim(vm.readFile("dist/SQRT.hex")));
-        assertEq(assemble("src/Challenge3.etk"), vm.parseBytes(bytecode));
+        assertEq(assemble("src/Challenge3.evm"), vm.parseBytes(bytecode));
     }
 
     /**

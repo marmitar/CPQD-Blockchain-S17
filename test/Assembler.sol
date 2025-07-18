@@ -178,7 +178,7 @@ contract AssemblerTest is Assembler, Test {
     /**
      * @dev Bytecode for the identity function, $f(x) = x$.
      */
-    string private constant IDENTITY = "test/Identity.etk";
+    string private constant IDENTITY = "test/Identity.evm";
 
     /**
      * @dev Verify that it assembles into the expected binary.

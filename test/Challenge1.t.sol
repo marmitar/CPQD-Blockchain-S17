@@ -10,7 +10,7 @@ import { TrabalhoERC20 } from "../src/Challenge1.sol";
 /**
  * @title Unit tests for the {TrabalhoERC20} contract.
  * @author Tiago de Paula <tiagodepalves@gmail.com>
- * @notice Based on <https://github.com/transmissions11/solmate/blob/main/src/test/ERC20.t.sol>.
+ * @dev Based on <https://github.com/transmissions11/solmate/blob/main/src/test/ERC20.t.sol>.
  */
 contract Challenge1Test is Test {
     TrabalhoERC20 private hrc;

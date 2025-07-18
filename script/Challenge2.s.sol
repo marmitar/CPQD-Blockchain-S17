@@ -53,7 +53,8 @@ contract PiFractionScript is Script {
     }
 
     /**
-     * @dev Simple continued fraction expansion of Pi. See <https://oeis.org/A001203>.
+     * @notice Simple continued fraction expansion of Pi.
+     * @dev See <https://oeis.org/A001203>.
      */
     /// forgefmt: disable-next-item
     uint16[] private coefPi = [

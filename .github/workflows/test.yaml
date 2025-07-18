@@ -26,7 +26,7 @@ jobs:
           path: |
             ~/.cargo
 
-      - name: Install etk assembler
+      - name: Install EVM assembler
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cargo install --profile release --features cli --locked etk-asm
