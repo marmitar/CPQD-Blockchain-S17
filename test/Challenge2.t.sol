@@ -20,7 +20,7 @@ contract Challenge2Test is Assembler, Test {
     /**
      * @notice Verify distributed assembly.
      */
-    function test_CicleAreaAssembly() external {
+    function test_CircleAreaAssembly() external {
         string memory bytecode = string.concat("0x", vm.trim(vm.readFile("dist/AreaCirculo.hex")));
         assertEq(assemble("src/Challenge2.etk"), vm.parseBytes(bytecode));
     }

@@ -1,0 +1,11 @@
+{
+  "lib/forge-std": {
+    "rev": "60acb7aaadcce2d68e52986a0a66fe79f07d138f"
+  },
+  "lib/prb-math": {
+    "branch": {
+      "name": "release-v4",
+      "rev": "280fc5f77e1b21b9c54013aac51966be33f4a410"
+    }
+  }
+}

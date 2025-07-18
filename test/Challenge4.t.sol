@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 import { Assembler, Runnable, RuntimeContract } from "./Assembler.sol";
 import { Test, Vm } from "forge-std/Test.sol";
-import { sqrt } from "prb-math/Common.sol";
 
 using Runnable for RuntimeContract;
 
