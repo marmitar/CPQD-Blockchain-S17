@@ -15,14 +15,14 @@ contract Challenge2Test is Assembler, Test {
     /**
      * @dev Circle area calculation, done in EVM bytecode.
      */
-    RuntimeContract private immutable CIRCLE_AREA = load("src/Challenge2.evm");
+    RuntimeContract private immutable CIRCLE_AREA = assemble("src/Challenge2.evm");
 
     /**
      * @notice Verify distributed assembly.
      */
     function test_CircleAreaAssembly() external {
-        string memory bytecode = string.concat("0x", vm.trim(vm.readFile("dist/AreaCirculo.hex")));
-        assertEq(assemble("src/Challenge2.evm"), vm.parseBytes(bytecode));
+        RuntimeContract distributed = load("dist/AreaCirculo.hex");
+        assertEq(CIRCLE_AREA.code(), distributed.code());
     }
 
     /**

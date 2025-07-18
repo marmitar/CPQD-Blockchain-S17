@@ -14,14 +14,14 @@ contract Challenge4Test is Assembler, Test {
     /**
      * @dev Gas Burner contract, done in EVM bytecode.
      */
-    RuntimeContract private immutable BURNER = load("src/Challenge4.evm");
+    RuntimeContract private immutable BURNER = assemble("src/Challenge4.evm");
 
     /**
      * @notice Verify distributed assembly.
      */
     function test_BurnerAssembly() external {
-        string memory bytecode = string.concat("0x", vm.trim(vm.readFile("dist/Desafio.hex")));
-        assertEq(assemble("src/Challenge4.evm"), vm.parseBytes(bytecode));
+        RuntimeContract distributed = load("dist/Desafio.hex");
+        assertEq(BURNER.code(), distributed.code());
     }
 
     /**
