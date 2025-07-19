@@ -44,6 +44,7 @@ contract Challenge3Test is Assembler, Test {
      */
     function test_SqrtExample() external {
         assertEq(iSqrt(5), 2, "sqrt(5)");
+        assertGasUsed(GAS_LIMIT, 390);
     }
 
     /**
@@ -51,11 +52,17 @@ contract Challenge3Test is Assembler, Test {
      */
     function test_SqrtSelectedCases() external {
         assertEq(iSqrt(0), 0, "sqrt(0)");
+        assertGasUsed(GAS_LIMIT, 38);
         assertEq(iSqrt(1), 1, "sqrt(1)");
+        assertGasUsed(GAS_LIMIT, 384);
         assertEq(iSqrt(10), 3, "sqrt(10)");
+        assertGasUsed(GAS_LIMIT, 390);
         assertEq(iSqrt(99), 9, "sqrt(99)");
+        assertGasUsed(GAS_LIMIT, 408);
         assertEq(iSqrt(100), 10, "sqrt(100)");
+        assertGasUsed(GAS_LIMIT, 408);
         assertEq(iSqrt(101), 10, "sqrt(101)");
+        assertGasUsed(GAS_LIMIT, 408);
     }
 
     /**
@@ -70,14 +77,23 @@ contract Challenge3Test is Assembler, Test {
         uint256 UINT256_MAX = type(uint256).max;
 
         assertEq(iSqrt(UINT16_MAX), UINT8_MAX, "sqrt(UINT16_MAX)");
+        assertGasUsed(GAS_LIMIT, 426);
         assertEq(iSqrt(UINT16_MAX + 1), UINT8_MAX + 1, "sqrt(UINT16_MAX + 1)");
+        assertGasUsed(GAS_LIMIT, 402);
         assertEq(iSqrt(UINT32_MAX), UINT16_MAX, "sqrt(UINT32_MAX)");
+        assertGasUsed(GAS_LIMIT, 441);
         assertEq(iSqrt(UINT32_MAX + 1), UINT16_MAX + 1, "sqrt(UINT32_MAX + 1)");
+        assertGasUsed(GAS_LIMIT, 402);
         assertEq(iSqrt(UINT64_MAX), UINT32_MAX, "sqrt(UINT64_MAX)");
+        assertGasUsed(GAS_LIMIT, 462);
         assertEq(iSqrt(UINT64_MAX + 1), UINT32_MAX + 1, "sqrt(UINT64_MAX + 1)");
+        assertGasUsed(GAS_LIMIT, 402);
         assertEq(iSqrt(UINT128_MAX), UINT64_MAX, "sqrt(UINT128_MAX)");
+        assertGasUsed(GAS_LIMIT, 477);
         assertEq(iSqrt(UINT128_MAX + 1), UINT64_MAX + 1, "sqrt(UINT128_MAX + 1)");
+        assertGasUsed(GAS_LIMIT, 402);
         assertEq(iSqrt(UINT256_MAX), UINT128_MAX, "sqrt(UINT256_MAX)");
+        assertGasUsed(GAS_LIMIT, 498);
     }
 
     /**
