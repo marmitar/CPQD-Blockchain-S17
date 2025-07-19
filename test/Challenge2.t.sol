@@ -24,7 +24,7 @@ contract Challenge2Test is Assembler, Test {
      */
     function test_CircleAreaAssembly() external {
         RuntimeContract distributed = load("dist/AreaCirculo.hex");
-        assertEq(CIRCLE_AREA.code(), distributed.code());
+        assertEq(CIRCLE_AREA.code(), distributed.code(), "distributed code");
     }
 
     /**
@@ -46,33 +46,33 @@ contract Challenge2Test is Assembler, Test {
      * @notice Examples from the challenge definition.
      */
     function test_CircleAreaExamples() external {
-        assertEq(circleArea(4), 50);
-        assertEq(circleArea(2), 13);
+        assertEq(circleArea(4), 50, "r = 4");
+        assertEq(circleArea(2), 13, "r = 2");
     }
 
     /**
      * @notice All powers of ten for 16-bit.
      */
     function test_CircleAreaPowersOfTen() external {
-        assertEq(circleArea(0), 0);
-        assertEq(circleArea(1), 3);
-        assertEq(circleArea(10), 314);
-        assertEq(circleArea(100), 31_416);
-        assertEq(circleArea(1000), 3_141_593);
-        assertEq(circleArea(10_000), 314_159_265);
+        assertEq(circleArea(0), 0, "r = 0");
+        assertEq(circleArea(1), 3, "r = 10**0");
+        assertEq(circleArea(10), 314, "r = 10**1");
+        assertEq(circleArea(100), 31_416, "r = 10**2");
+        assertEq(circleArea(1000), 3_141_593, "r = 10**3");
+        assertEq(circleArea(10_000), 314_159_265, "r = 10**4");
     }
 
     /**
      * @notice Guarantee that even the largest input radius can't overflow.
      */
     function test_CircleAreaNoOverflow() external {
-        assertEq(circleArea(65_535), 13_492_625_933);
+        assertEq(circleArea(65_535), 13_492_625_933, "r = UINT16_MAX");
     }
 
     /**
      * @notice Fuzz testing, comparing to a precise implementation.
      */
     function testFuzz_CircleArea(uint16 radius) external {
-        assertEq(circleArea(radius), expectedCircleArea(radius));
+        assertEq(circleArea(radius), expectedCircleArea(radius), "0 <= r <= UINT16_MAX");
     }
 }

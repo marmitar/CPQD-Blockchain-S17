@@ -24,7 +24,7 @@ contract Challenge3Test is Assembler, Test {
      */
     function test_SqrtAssembly() external {
         RuntimeContract distributed = load("dist/SQRT.hex");
-        assertEq(SQRT.code(), distributed.code());
+        assertEq(SQRT.code(), distributed.code(), "distributed code");
     }
 
     /**
@@ -38,37 +38,37 @@ contract Challenge3Test is Assembler, Test {
      * @notice Examples from the challenge definition.
      */
     function test_SqrtExample() external {
-        assertEq(iSqrt(5), 2);
+        assertEq(iSqrt(5), 2, "sqrt(5)");
     }
 
     /**
      * @notice Selected corner cases.
      */
     function test_SqrtSelectedCases() external {
-        assertEq(iSqrt(0), 0);
-        assertEq(iSqrt(1), 1);
-        assertEq(iSqrt(10), 3);
-        assertEq(iSqrt(99), 9);
-        assertEq(iSqrt(100), 10);
-        assertEq(iSqrt(101), 10);
+        assertEq(iSqrt(0), 0, "sqrt(0)");
+        assertEq(iSqrt(1), 1, "sqrt(1)");
+        assertEq(iSqrt(10), 3, "sqrt(10)");
+        assertEq(iSqrt(99), 9, "sqrt(99)");
+        assertEq(iSqrt(100), 10, "sqrt(100)");
+        assertEq(iSqrt(101), 10, "sqrt(101)");
     }
 
     /**
      * @notice Casacading effect of square root on powers of two.
      */
     function test_SqrtPowersOfTwo() external {
-        assertEq(iSqrt(type(uint16).max), type(uint8).max);
-        assertEq(iSqrt(type(uint32).max), type(uint16).max);
-        assertEq(iSqrt(type(uint64).max), type(uint32).max);
-        assertEq(iSqrt(type(uint128).max), type(uint64).max);
-        assertEq(iSqrt(type(uint256).max), type(uint128).max);
+        assertEq(iSqrt(type(uint16).max), type(uint8).max, "sqrt(UINT16_MAX)");
+        assertEq(iSqrt(type(uint32).max), type(uint16).max, "sqrt(UINT32_MAX)");
+        assertEq(iSqrt(type(uint64).max), type(uint32).max, "sqrt(UINT64_MAX)");
+        assertEq(iSqrt(type(uint128).max), type(uint64).max, "sqrt(UINT128_MAX)");
+        assertEq(iSqrt(type(uint256).max), type(uint128).max, "sqrt(UINT256_MAX)");
     }
 
     /**
      * @notice Fuzz testing, comparing to a precise implementation.
      */
     function testFuzz_Sqrt(uint256 x) external {
-        assertEq(iSqrt(x), sqrt(x));
+        assertEq(iSqrt(x), sqrt(x), "sqrt(0 <= x <= UINT256_MAX)");
     }
 
     /**
@@ -83,6 +83,6 @@ contract Challenge3Test is Assembler, Test {
      */
     function testFuzz_SqrtBig(uint256 input) external {
         uint256 x = shuffleUint256(input);
-        assertEq(iSqrt(x), sqrt(x));
+        assertEq(iSqrt(x), sqrt(x), "sqrt(0 <= x <= UINT256_MAX)");
     }
 }

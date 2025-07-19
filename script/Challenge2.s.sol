@@ -121,9 +121,9 @@ contract PiFractionScript is Script {
     }
 
     /**
-     * @dev Maximum input for the radius specified in Challenge 2.
+     * @notice Maximum input for the radius specified in Challenge 2.
      */
-    uint256 constant MAX_R = 65_535;
+    uint256 public constant MAX_R = 65_535;
 
     /**
      * @notice Find closest approximation of pi and its inverse modulo `2^256`.

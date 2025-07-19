@@ -23,17 +23,7 @@ contract Challenge4Test is Assembler, Test {
      */
     function test_BurnerAssembly() external {
         RuntimeContract distributed = load("dist/Desafio.hex");
-        assertEq(BURNER.code(), distributed.code());
-    }
-
-    /**
-     * @notice Verifies that all gas was used, non remain.
-     */
-    function assertGasUsed(Vm.Gas memory usage, uint256 gasLimit) private noGasMetering {
-        assertEq(usage.gasLimit, gasLimit, "gasLimit");
-        assertEq(usage.gasTotalUsed, gasLimit, "gasTotalUsed");
-        assertEq(usage.gasRefunded, 0, "gasRefunded");
-        assertEq(usage.gasRemaining, 0, "gasRemaining");
+        assertEq(BURNER.code(), distributed.code(), "distributed code");
     }
 
     /**

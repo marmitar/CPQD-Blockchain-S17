@@ -16,7 +16,7 @@ contract Challenge1Test is Test {
     TrabalhoERC20 private hrc;
 
     /**
-     * @dev Runs before each test case. Useful for cleaning up left-over state.
+     * @notice Runs before each test case. Useful for cleaning up left-over state.
      */
     function setUp() external {
         vm.expectEmit(1);
@@ -32,9 +32,9 @@ contract Challenge1Test is Test {
     function invariant_HasOptionalMetadata() external {
         targetSender(hrc.THE_HEIR());
 
-        assertEq(hrc.name(), "Heir Coin");
-        assertEq(hrc.symbol(), "HRC");
-        assertEq(hrc.decimals(), 0);
+        assertEq(hrc.name(), "Heir Coin", "name()");
+        assertEq(hrc.symbol(), "HRC", "symbol()");
+        assertEq(hrc.decimals(), 0, "decimals()");
     }
 
     /**
@@ -43,14 +43,14 @@ contract Challenge1Test is Test {
     function invariant_TotalSupply() external {
         targetSender(hrc.THE_HEIR());
 
-        assertEq(hrc.totalSupply(), 1000);
+        assertEq(hrc.totalSupply(), 1000, "totalSupply()");
     }
 
     /**
      * @notice Checks that {TrabalhoERC20} starts with all balances zeroed, except for {THE_HEIR}.
      */
     function testFuzz_InitialBalance(address account) external view {
-        assertEq(hrc.balanceOf(account), account == hrc.THE_HEIR() ? 1000 : 0);
+        assertEq(hrc.balanceOf(account), account == hrc.THE_HEIR() ? 1000 : 0, "balanceOf()");
     }
 
     /**
@@ -58,7 +58,7 @@ contract Challenge1Test is Test {
      */
     function testFuzz_Approve(address spender, uint256 value) external {
         address owner = hrc.THE_HEIR();
-        assertEq(hrc.allowance(owner, spender), 0);
+        assertEq(hrc.allowance(owner, spender), 0, "allowance()");
 
         vm.expectEmit(address(hrc), 1);
         emit IERC20.Approval(owner, spender, value);
@@ -66,7 +66,7 @@ contract Challenge1Test is Test {
         vm.prank(owner);
         hrc.approve(spender, value);
 
-        assertEq(hrc.allowance(owner, spender), value);
+        assertEq(hrc.allowance(owner, spender), value, "allowance()");
     }
 
     /**
@@ -80,13 +80,13 @@ contract Challenge1Test is Test {
         emit IERC20.Transfer(owner, to, amount);
 
         vm.prank(owner);
-        assertTrue(hrc.transfer(to, amount));
+        assertTrue(hrc.transfer(to, amount), "transfer()");
 
         if (to == owner) {
-            assertEq(hrc.balanceOf(owner), hrc.totalSupply());
+            assertEq(hrc.balanceOf(owner), hrc.totalSupply(), "balanceOf(owner)");
         } else {
-            assertEq(hrc.balanceOf(to), amount);
-            assertEq(hrc.balanceOf(owner), hrc.totalSupply() - amount);
+            assertEq(hrc.balanceOf(to), amount, "balanceOf(to)");
+            assertEq(hrc.balanceOf(owner), hrc.totalSupply() - amount, "balanceOf(owner)");
         }
     }
 
@@ -102,20 +102,20 @@ contract Challenge1Test is Test {
         emit IERC20.Approval(owner, spender, approval);
 
         vm.prank(owner);
-        assertTrue(hrc.approve(spender, approval));
+        assertTrue(hrc.approve(spender, approval), "approve()");
 
         vm.expectEmit(address(hrc), 1);
         emit IERC20.Transfer(owner, to, amount);
 
-        assertTrue(hrc.transferFrom(owner, to, amount));
-        assertEq(hrc.allowance(owner, spender), approval - amount);
+        assertTrue(hrc.transferFrom(owner, to, amount), "transferFrom()");
+        assertEq(hrc.allowance(owner, spender), approval - amount, "allowance()");
 
         if (to == owner) {
-            assertEq(hrc.balanceOf(owner), hrc.totalSupply());
-            assertEq(hrc.balanceOf(spender), 0);
+            assertEq(hrc.balanceOf(owner), hrc.totalSupply(), "balanceOf(owner)");
+            assertEq(hrc.balanceOf(spender), 0, "balanceOf(spender)");
         } else {
-            assertEq(hrc.balanceOf(to), amount);
-            assertEq(hrc.balanceOf(owner), hrc.totalSupply() - amount);
+            assertEq(hrc.balanceOf(to), amount, "balanceOf(to)");
+            assertEq(hrc.balanceOf(owner), hrc.totalSupply() - amount, "balanceOf(owner)");
         }
     }
 
@@ -135,11 +135,11 @@ contract Challenge1Test is Test {
             abi.encodeWithSelector(TrabalhoERC20.InsufficientBalance.selector, owner, initialBalance, amount)
         );
         vm.prank(owner);
-        assertFalse(hrc.transfer(to, amount));
+        assertFalse(hrc.transfer(to, amount), "revert InsufficientBalance");
 
-        assertEq(hrc.balanceOf(hrc.THE_HEIR()), hrc.totalSupply());
-        assertEq(hrc.balanceOf(owner), initialBalance);
-        assertEq(hrc.balanceOf(to), 0);
+        assertEq(hrc.balanceOf(hrc.THE_HEIR()), hrc.totalSupply(), "balanceOf(THE_HEIR)");
+        assertEq(hrc.balanceOf(owner), initialBalance, "balanceOf(owner)");
+        assertEq(hrc.balanceOf(to), 0, "balanceOf(to)");
     }
 
     /**
@@ -156,7 +156,7 @@ contract Challenge1Test is Test {
         emit IERC20.Approval(owner, spender, approval);
 
         vm.prank(owner);
-        assertTrue(hrc.approve(spender, approval));
+        assertTrue(hrc.approve(spender, approval), "approve()");
 
         vm.expectEmit(address(hrc), 0);
         emit IERC20.Transfer(owner, to, amount);
@@ -164,12 +164,12 @@ contract Challenge1Test is Test {
         vm.expectRevert(
             abi.encodeWithSelector(TrabalhoERC20.InsufficientAllowance.selector, owner, spender, approval, amount)
         );
-        assertFalse(hrc.transferFrom(owner, to, amount));
-        assertEq(hrc.allowance(owner, spender), approval);
+        assertFalse(hrc.transferFrom(owner, to, amount), "revert InsufficientAllowance");
+        assertEq(hrc.allowance(owner, spender), approval, "allowance()");
 
-        assertEq(hrc.balanceOf(owner), hrc.totalSupply());
-        assertEq(hrc.balanceOf(spender), 0);
-        assertEq(hrc.balanceOf(to), to == hrc.THE_HEIR() ? hrc.totalSupply() : 0);
+        assertEq(hrc.balanceOf(owner), hrc.totalSupply(), "balanceOf(owner)");
+        assertEq(hrc.balanceOf(spender), 0, "balanceOf(spender)");
+        assertEq(hrc.balanceOf(to), to == hrc.THE_HEIR() ? hrc.totalSupply() : 0, "balanceOf(to)");
     }
 
     /**
@@ -186,7 +186,7 @@ contract Challenge1Test is Test {
         emit IERC20.Approval(owner, spender, approval);
 
         vm.prank(owner);
-        assertTrue(hrc.approve(spender, approval));
+        assertTrue(hrc.approve(spender, approval), "approve()");
 
         vm.expectEmit(address(hrc), 0);
         emit IERC20.Transfer(owner, to, amount);
@@ -194,11 +194,11 @@ contract Challenge1Test is Test {
         vm.expectRevert(
             abi.encodeWithSelector(TrabalhoERC20.InsufficientBalance.selector, owner, hrc.totalSupply(), amount)
         );
-        assertFalse(hrc.transferFrom(owner, to, amount));
-        assertEq(hrc.allowance(owner, spender), approval);
+        assertFalse(hrc.transferFrom(owner, to, amount), "revert InsufficientBalance");
+        assertEq(hrc.allowance(owner, spender), approval, "allowance()");
 
-        assertEq(hrc.balanceOf(owner), hrc.totalSupply());
-        assertEq(hrc.balanceOf(spender), 0);
-        assertEq(hrc.balanceOf(to), to == hrc.THE_HEIR() ? hrc.totalSupply() : 0);
+        assertEq(hrc.balanceOf(owner), hrc.totalSupply(), "balanceOf(owner)");
+        assertEq(hrc.balanceOf(spender), 0, "balanceOf(spender)");
+        assertEq(hrc.balanceOf(to), to == hrc.THE_HEIR() ? hrc.totalSupply() : 0, "balanceOf(to)");
     }
 }

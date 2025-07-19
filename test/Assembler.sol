@@ -214,6 +214,24 @@ abstract contract Assembler is TestBase, StdCheats {
     function run(RuntimeContract runtime, bytes memory input) internal noGasMetering returns (bytes memory output) {
         (output,) = run(DEFAULT_GAS_LIMIT, runtime, input);
     }
+
+    /**
+     * @notice Verifies that an specific amount of gas was used.
+     */
+    function assertGasUsed(Vm.Gas memory usage, uint256 gasLimit, uint256 gasUsed) internal noGasMetering {
+        vm.assertEq(usage.gasLimit, gasLimit, "gasLimit");
+        vm.assertEq(usage.gasTotalUsed, gasUsed, "gasTotalUsed");
+        vm.assertEq(usage.gasMemoryUsed, 0, "gasMemoryUsed (DEPRECATED)");
+        vm.assertEq(usage.gasRefunded, 0, "gasRefunded");
+        vm.assertEq(usage.gasRemaining, gasLimit - gasUsed, "gasRemaining");
+    }
+
+    /**
+     * @notice Verifies that all gas was used, none remain.
+     */
+    function assertGasUsed(Vm.Gas memory usage, uint256 gasLimit) internal noGasMetering {
+        assertGasUsed(usage, gasLimit, gasLimit);
+    }
 }
 
 /**
@@ -230,7 +248,7 @@ contract AssemblerTest is Assembler, Test {
      * @notice Verify that it assembles into the expected binary.
      */
     function test_AssemblesBytecode() external {
-        assertEq(assemble(IDENTITY).code(), hex"5f_35_5f_52_60_20_5f_f3");
+        assertEq(assemble(IDENTITY).code(), hex"5f_35_5f_52_60_20_5f_f3", "assembled IDENTITY");
     }
 
     /**
@@ -238,8 +256,8 @@ contract AssemblerTest is Assembler, Test {
      */
     function testFuzz_BytecodeRuns(uint256 value) external {
         RuntimeContract runtime = assemble(IDENTITY);
-        assertEq(run(runtime, abi.encode(value)).asUint256(), value);
-        assertEq(vm.getLabel(RuntimeContract.unwrap(runtime)), IDENTITY);
+        assertEq(run(runtime, abi.encode(value)).asUint256(), value, "IDENTITY output");
+        assertEq(vm.getLabel(RuntimeContract.unwrap(runtime)), IDENTITY, "IDENTITY label");
     }
 
     /**
@@ -247,12 +265,12 @@ contract AssemblerTest is Assembler, Test {
      */
     /// forge-config: default.allow_internal_expect_revert = true
     function test_RevertIf_ContractIsEmpty() external {
-        assertEq(Decode.NULL.length, 0);
+        assertEq(Decode.NULL.length, 0, "NULL reference");
 
         vm.expectRevert(Assembler.EmptyBytecode.selector);
         RuntimeContract failed = create(Decode.NULL, "VOID");
 
-        assertEq(RuntimeContract.unwrap(failed), address(0));
+        assertEq(RuntimeContract.unwrap(failed), address(0), "reverted create");
     }
 
     /**
@@ -265,7 +283,7 @@ contract AssemblerTest is Assembler, Test {
         vm.expectRevert(Assembler.EmptyLabel.selector);
         RuntimeContract failed = create(bytecode, "           ");
 
-        assertEq(RuntimeContract.unwrap(failed), address(0));
+        assertEq(RuntimeContract.unwrap(failed), address(0), "reverted create");
     }
 
     /**
@@ -280,7 +298,7 @@ contract AssemblerTest is Assembler, Test {
         RuntimeContract runtime = create(abi.encodePacked(REVERT_BYTECODE), "REVERT_BYTECODE");
 
         vm.expectRevert(Runnable.ExecutionReverted.selector);
-        assertEq(run(runtime, Decode.NULL), Decode.NULL);
+        assertEq(run(runtime, Decode.NULL), Decode.NULL, "reverted run");
     }
 
     /**
@@ -296,7 +314,7 @@ contract AssemblerTest is Assembler, Test {
 
         bytes memory output = run(runtime, Decode.NULL);
         vm.expectRevert(abi.encodeWithSelector(Decode.MismatchedData.selector, 32, "uint256", 0));
-        assertEq(output.asUint256(), 0);
+        assertEq(output.asUint256(), 0, "not enough bytes for uint256");
     }
 
     /**
@@ -307,10 +325,7 @@ contract AssemblerTest is Assembler, Test {
         (bytes memory output, Vm.Gas memory usage) = run(1, runtime, Decode.NULL);
         output.asVoid();
 
-        assertEq(usage.gasLimit, 1);
-        assertEq(usage.gasTotalUsed, 0);
-        assertEq(usage.gasRefunded, 0);
-        assertEq(usage.gasRemaining, 1);
+        assertGasUsed(usage, 1, 0);
     }
 
     /**
@@ -332,10 +347,7 @@ contract AssemblerTest is Assembler, Test {
         (bytes memory output, Vm.Gas memory usage) = run(20, runtime, Decode.NULL);
         output.asVoid();
 
-        assertEq(usage.gasLimit, 0);
-        assertEq(usage.gasTotalUsed, 0);
-        assertEq(usage.gasRefunded, 0);
-        assertEq(usage.gasRemaining, 0);
+        assertGasUsed(usage, 0);
     }
 
     /**
@@ -348,9 +360,6 @@ contract AssemblerTest is Assembler, Test {
         vm.expectRevert(abi.encodeWithSelector(Decode.MismatchedData.selector, 0, "()", 32));
         output.asVoid();
 
-        assertEq(usage.gasLimit, 100);
-        assertEq(usage.gasTotalUsed, 18);
-        assertEq(usage.gasRefunded, 0);
-        assertEq(usage.gasRemaining, 82);
+        assertGasUsed(usage, 100, 18);
     }
 }
