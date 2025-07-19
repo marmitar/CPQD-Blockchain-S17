@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.27;
 
-import { Assembler, Runnable, RuntimeContract } from "./Assembler.sol";
 import { Test, Vm } from "forge-std/Test.sol";
 
+import { Assembler, Decode, Runnable, RuntimeContract } from "./Assembler.sol";
+
 using Runnable for RuntimeContract;
+using Decode for bytes;
 
 /**
  * @title Unit tests for the Gas Burner contract.
@@ -12,7 +14,7 @@ using Runnable for RuntimeContract;
  */
 contract Challenge4Test is Assembler, Test {
     /**
-     * @dev Gas Burner contract, done in EVM bytecode.
+     * @notice Gas Burner contract, done in EVM bytecode.
      */
     RuntimeContract private immutable BURNER = assemble("src/Challenge4.evm");
 
@@ -35,16 +37,25 @@ contract Challenge4Test is Assembler, Test {
     }
 
     /**
-     * @dev Minimum amount of gas for the Gas Burner to not revert.
+     * @notice Minimum amount of gas for the Gas Burner to not revert.
      */
     uint256 private constant LIMIT = 8 + 30 + 22;
+
+    /**
+     * @notice Precise implementation using `prb-math`.
+     */
+    function burn(uint256 gas) private returns (Vm.Gas memory usage) {
+        (bytes memory output, Vm.Gas memory gasUsage) = run(gas, BURNER, Decode.NULL);
+        output.asVoid();
+        return gasUsage;
+    }
 
     /**
      * @notice Check the very first two passing gas limits.
      */
     function test_BurnerLowerLimit() external {
-        assertGasUsed(BURNER.runWithGasLimit(vm, LIMIT), LIMIT);
-        assertGasUsed(BURNER.runWithGasLimit(vm, LIMIT + 1), LIMIT + 1);
+        assertGasUsed(burn(LIMIT), LIMIT);
+        assertGasUsed(burn(LIMIT + 1), LIMIT + 1);
     }
 
     /**
@@ -52,28 +63,28 @@ contract Challenge4Test is Assembler, Test {
      */
     function test_RevertIf_LessThanLimit() external {
         vm.expectRevert(Runnable.ExecutionReverted.selector);
-        assertGasUsed(BURNER.runWithGasLimit(vm, LIMIT - 1), 0);
+        assertGasUsed(burn(LIMIT - 1), 0);
     }
 
     /**
-     * @dev Fuzz testing for the common amount of gas.
+     * notice Fuzz testing for the common amount of gas.
      */
     /// forge-config: default.fuzz.runs = 256
     function testFuzz_BurnALotOfGas(uint16 gasLimit) external {
         vm.assume(gasLimit >= LIMIT);
 
-        assertGasUsed(BURNER.runWithGasLimit(vm, gasLimit), gasLimit);
+        assertGasUsed(burn(gasLimit), gasLimit);
     }
 
     /**
-     * @dev Fuzz testing for large values of gas.
+     * @notice Fuzz testing for large values of gas.
      */
     /// forge-config: default.fuzz.runs = 256
     function testFuzz_BurnAllGas(uint32 gasLimit) external {
         // more than 1e9 and the test goes out of gas
         vm.assume(gasLimit >= LIMIT && gasLimit < 1e9);
 
-        assertGasUsed(BURNER.runWithGasLimit(vm, gasLimit), gasLimit);
+        assertGasUsed(burn(gasLimit), gasLimit);
     }
 
     /**
@@ -83,6 +94,6 @@ contract Challenge4Test is Assembler, Test {
         vm.assume(gasLimit < LIMIT);
 
         vm.expectRevert(Runnable.ExecutionReverted.selector);
-        assertGasUsed(BURNER.runWithGasLimit(vm, gasLimit), 0);
+        assertGasUsed(burn(gasLimit), 0);
     }
 }

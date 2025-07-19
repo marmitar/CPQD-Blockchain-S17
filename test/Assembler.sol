@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.27;
 
-import { Test, TestBase, Vm } from "forge-std/Test.sol";
+import { StdCheats, Test, TestBase, Vm } from "forge-std/Test.sol";
 
 /**
  * @title Address of a dynamically assembled contract.
@@ -21,65 +21,78 @@ using Runnable for RuntimeContract;
  * @author Tiago de Paula <tiagodepalves@gmail.com>
  * @dev Based on <https://github.com/Analog-Labs/evm-interpreter/blob/main/src/utils/InterpreterUtils.sol>.
  */
-/// forge-config: default.optimizer-runs = 200000
 library Runnable {
     /**
      * @notice Return the contract's bytecode (`EXTCODECOPY`).
      */
-    function code(RuntimeContract runtime) public view returns (bytes memory bytecode) {
+    function code(RuntimeContract runtime) external view returns (bytes memory bytecode) {
         return RuntimeContract.unwrap(runtime).code;
     }
 
     /**
-     * @dev Pre-defined gas limit for bytecode contracts.
-     */
-    uint256 private constant DEFAULT_GAS_LIMIT = 100_000;
-
-    /**
-     * @notice {RuntimeContract} execution reverted.
+     * @notice {RuntimeContract} execution reverted without any specific error.
      */
     error ExecutionReverted();
 
     /**
      * @notice Executes the {RuntimeContract} and verify successful exection. Input and output unaltered.
+     * Gas usage is mesured and returned.
+     * @dev Sadly, this must be implemented outside {Assembler}, in new "contract" (or library, in this case).
      */
-    function run(RuntimeContract runtime, bytes memory input) public returns (bytes memory output) {
+    /// forge-config: default.optimizer-runs = 2000000
+    function staticCall(RuntimeContract runtime, uint256 gasLimit, Vm vm, bytes memory input)
+        external
+        view
+        returns (bytes memory output, Vm.Gas memory usage)
+    {
         address deployedCode = RuntimeContract.unwrap(runtime);
-        (bool success, bytes memory result) = deployedCode.call{ gas: DEFAULT_GAS_LIMIT }(input);
-        require(success, ExecutionReverted());
-        return result;
+        (bool success, bytes memory result) = deployedCode.staticcall{ gas: gasLimit }(input);
+
+        if (success) {
+            return (result, vm.lastCallGas());
+        } else if (result.length > 0) {
+            // custom error
+            assembly {
+                revert(add(result, 0x20), mload(result))
+            }
+        } else {
+            // generic error
+            revert ExecutionReverted();
+        }
+    }
+}
+
+using Decode for bytes;
+
+/**
+ * @title Checked conversions from `bytes` data.
+ * @author Tiago de Paula <tiagodepalves@gmail.com>
+ */
+library Decode {
+    /**
+     * @notice Given `bytes` data cannot be correctly converted to expected type.
+     */
+    error MismatchedData(uint256 requiredSize, string typeName, uint256 actualSize);
+
+    /**
+     * @notice Convert `bytes` to `uint256` safely.
+     */
+    function asUint256(bytes memory data) external pure returns (uint256 value) {
+        require(data.length == 32, MismatchedData(32, "uint256", data.length));
+        return abi.decode(data, (uint256));
     }
 
     /**
-     * @notice {RuntimeContract} returned a different number of outputs.
+     * @notice Empty byte array. Used for the `Unit` type or `void` marker in some programming languages, representing
+     * an empty input or output from a function.
      */
-    error MismatchedOutput();
+    bytes public constant NULL = new bytes(0);
 
     /**
-     * @notice Executes the {RuntimeContract} assuming a single 32-bit input and output.
+     * @notice Verifies that `bytes` is empty, as in a `void` return from a function call.
      */
-    function run(RuntimeContract runtime, uint256 input) external returns (uint256 output) {
-        bytes memory result = run(runtime, abi.encode(input));
-        require(result.length == 32, MismatchedOutput());
-        return abi.decode(result, (uint256));
-    }
-
-    /**
-     * @dev Empty byte array.
-     */
-    bytes constant NULL = new bytes(0);
-
-    /**
-     * @notice Executes the {RuntimeContract} with the given `gasLimit` and measure `usage`.
-     */
-    function runWithGasLimit(RuntimeContract runtime, Vm vm, uint256 gasLimit) external returns (Vm.Gas memory usage) {
-        address deployedCode = RuntimeContract.unwrap(runtime);
-
-        (bool success, bytes memory result) = deployedCode.call{ gas: gasLimit }(NULL);
-        usage = vm.lastCallGas();
-
-        require(success, ExecutionReverted());
-        require(result.length == NULL.length, MismatchedOutput());
+    function asVoid(bytes memory data) external pure {
+        require(data.length == 0, MismatchedData(0, "()", data.length));
     }
 }
 
@@ -87,16 +100,16 @@ library Runnable {
  * @title Test utility for assembling EVM bytecode at runtime.
  * @author Tiago de Paula <tiagodepalves@gmail.com>
  */
-abstract contract Assembler is TestBase {
+abstract contract Assembler is TestBase, StdCheats {
     /**
-     * @dev Assembles bytecode from file located at `pathToMnemonic` and create a new runtime contract with it.
+     * @notice Assembles bytecode from file located at `pathToMnemonic` and create a new runtime contract with it.
      */
     function assemble(string memory pathToMnemonic) internal returns (RuntimeContract runtime) {
         return create(eas(pathToMnemonic), pathToMnemonic);
     }
 
     /**
-     * @dev Assembles bytecode from file located at `pathToMnemonic` using [eas](https://github.com/quilt/etk).
+     * @notice Assembles bytecode from file located at `pathToMnemonic` using [eas](https://github.com/quilt/etk).
      */
     function eas(string memory pathToMnemonic) private returns (bytes memory bytecode) {
         string[] memory cmd = new string[](2);
@@ -107,7 +120,7 @@ abstract contract Assembler is TestBase {
     }
 
     /**
-     * @dev Load bytecode from a file located at `pathToBytecodeHex` and create a new runtime contract with it.
+     * @notice Load bytecode from a file located at `pathToBytecodeHex` and create a new runtime contract with it.
      */
     function load(string memory pathToBytecodeHex) internal returns (RuntimeContract runtime) {
         string memory bytecodeHex = string.concat("0x", vm.trim(vm.readFile(pathToBytecodeHex)));
@@ -115,19 +128,19 @@ abstract contract Assembler is TestBase {
     }
 
     /**
-     * @dev Runtime code is empty.
+     * @notice Runtime code is empty.
      */
     error EmptyBytecode();
 
     /**
-     * @dev Label given for the {RuntimeContract} is empty.
+     * @notice Label given for the {RuntimeContract} is empty.
      */
     error EmptyLabel();
 
     /**
      * @notice Create a new contract with `bytecode`. It appends `GENERIC_CONSTRUCTOR_BYTECODE` to deploy the contract.
      * @param debugLabel Name of the for debugging purposes.
-     * @dev From <https://github.com/Lohann/trabalho-seguranca-evm/blob/master/src/LowLevelUtils.sol>.
+     * @dev Based on <https://github.com/Lohann/trabalho-seguranca-evm/blob/master/src/LowLevelUtils.sol>.
      */
     function create(bytes memory bytecode, string memory debugLabel) internal returns (RuntimeContract runtime) {
         require(bytecode.length > 0, EmptyBytecode());
@@ -172,6 +185,35 @@ abstract contract Assembler is TestBase {
      * @dev From <https://github.com/Lohann/trabalho-seguranca-evm/blob/master/src/LowLevelUtils.sol>.
      */
     uint88 private constant GENERIC_CONSTRUCTOR_BYTECODE = 0x600b38035f81600b5f39f3;
+
+    /**
+     * @notice Executes the {RuntimeContract} and verify successful exection. Input and output unaltered.
+     * Gas usage is mesured and returned.
+     */
+    /// forge-config: default.optimizer-runs = 2000000
+    function run(uint256 gasLimit, RuntimeContract runtime, bytes memory input)
+        internal
+        noGasMetering
+        returns (bytes memory output, Vm.Gas memory usage)
+    {
+        vm.resumeGasMetering();
+        (bytes memory result, Vm.Gas memory gasUsage) = runtime.staticCall(gasLimit, vm, input);
+        vm.pauseGasMetering();
+
+        return (result, gasUsage);
+    }
+
+    /**
+     * @notice Pre-defined gas limit for bytecode contracts.
+     */
+    uint256 private constant DEFAULT_GAS_LIMIT = 100_000;
+
+    /**
+     * @notice Executes the {RuntimeContract} and verify successful exection. Input and output unaltered.
+     */
+    function run(RuntimeContract runtime, bytes memory input) internal noGasMetering returns (bytes memory output) {
+        (output,) = run(DEFAULT_GAS_LIMIT, runtime, input);
+    }
 }
 
 /**
@@ -180,41 +222,41 @@ abstract contract Assembler is TestBase {
  */
 contract AssemblerTest is Assembler, Test {
     /**
-     * @dev Bytecode for the identity function, $f(x) = x$.
+     * @notice Bytecode for the identity function, $f(x) = x$.
      */
     string private constant IDENTITY = "test/Identity.evm";
 
     /**
-     * @dev Verify that it assembles into the expected binary.
+     * @notice Verify that it assembles into the expected binary.
      */
     function test_AssemblesBytecode() external {
         assertEq(assemble(IDENTITY).code(), hex"5f_35_5f_52_60_20_5f_f3");
     }
 
     /**
-     * @dev Verify that it returns the input value unchanged.
+     * @notice Verify that it returns the input value unchanged.
      */
     function testFuzz_BytecodeRuns(uint256 value) external {
         RuntimeContract runtime = assemble(IDENTITY);
-        assertEq(runtime.run(value), value);
+        assertEq(run(runtime, abi.encode(value)).asUint256(), value);
         assertEq(vm.getLabel(RuntimeContract.unwrap(runtime)), IDENTITY);
     }
 
     /**
-     * @dev Forbid empty contracts after `GENERIC_CONSTRUCTOR_BYTECODE`.
+     * @notice Forbid empty contracts after `GENERIC_CONSTRUCTOR_BYTECODE`.
      */
     /// forge-config: default.allow_internal_expect_revert = true
     function test_RevertIf_ContractIsEmpty() external {
-        assertEq(Runnable.NULL.length, 0);
+        assertEq(Decode.NULL.length, 0);
 
         vm.expectRevert(Assembler.EmptyBytecode.selector);
-        RuntimeContract failed = create(Runnable.NULL, "NULL");
+        RuntimeContract failed = create(Decode.NULL, "VOID");
 
         assertEq(RuntimeContract.unwrap(failed), address(0));
     }
 
     /**
-     * @dev Forbid empty debug labels, if used.
+     * @notice Forbid empty debug labels, if used.
      */
     /// forge-config: default.allow_internal_expect_revert = true
     function test_RevertIf_LabelIsEmpty() external {
@@ -227,41 +269,43 @@ contract AssemblerTest is Assembler, Test {
     }
 
     /**
-     * @dev Hexadecimal value of the `REVERT` instruction.
+     * @notice Hexadecimal value of the `REVERT` instruction.
      */
     bytes1 private constant REVERT_BYTECODE = 0xfd;
 
     /**
-     * @dev Check that a revert in the bytecode causes an {ExecutionReverted} error.
+     * @notice Check that a revert in the bytecode causes an {ExecutionReverted} error.
      */
     function test_RevertIf_BytecodeReverts() external {
         RuntimeContract runtime = create(abi.encodePacked(REVERT_BYTECODE), "REVERT_BYTECODE");
 
         vm.expectRevert(Runnable.ExecutionReverted.selector);
-        assertEq(runtime.run(Runnable.NULL), Runnable.NULL);
+        assertEq(run(runtime, Decode.NULL), Decode.NULL);
     }
 
     /**
-     * @dev Hexadecimal value of the `STOP` instruction.
+     * @notice Hexadecimal value of the `STOP` instruction.
      */
     bytes1 private constant STOP_BYTECODE = 0x00;
 
     /**
-     * @dev Check that invalid output causes an {MismatchedOutput} error.
+     * @notice Check that invalid output causes an {MismatchedData} error.
      */
-    function test_RevertIf_MismatchedOutputOnStop() external {
+    function test_RevertIf_MismatchedDataOnStop() external {
         RuntimeContract runtime = create(abi.encodePacked(STOP_BYTECODE), "STOP_BYTECODE");
 
-        vm.expectRevert(Runnable.MismatchedOutput.selector);
-        assertEq(runtime.run(0), 0);
+        bytes memory output = run(runtime, Decode.NULL);
+        vm.expectRevert(abi.encodeWithSelector(Decode.MismatchedData.selector, 32, "uint256", 0));
+        assertEq(output.asUint256(), 0);
     }
 
     /**
-     * @dev Check that invalid output causes an {MismatchedOutput} error.
+     * @notice Check that invalid output causes an {MismatchedOutput} error.
      */
     function test_StopDoesntSpendGas() external {
         RuntimeContract runtime = create(abi.encodePacked(STOP_BYTECODE), "STOP_BYTECODE");
-        Vm.Gas memory usage = runtime.runWithGasLimit(vm, 1);
+        (bytes memory output, Vm.Gas memory usage) = run(1, runtime, Decode.NULL);
+        output.asVoid();
 
         assertEq(usage.gasLimit, 1);
         assertEq(usage.gasTotalUsed, 0);
@@ -270,7 +314,7 @@ contract AssemblerTest is Assembler, Test {
     }
 
     /**
-     * @dev Simple bytecode that uses 33 gas.
+     * @notice Simple bytecode that uses 33 gas.
      *
      *  PUSH0
      *  PUSH0
@@ -279,13 +323,14 @@ contract AssemblerTest is Assembler, Test {
     bytes private constant USES_33_GAS = hex"5f_5f_20";
 
     /**
-     * @dev Check that invalid output causes an {MismatchedOutput} error.
+     * @notice Check that using more gas than limit causes a revert.
      */
     function test_RevertIf_SpentTooMuchGas() external {
         RuntimeContract runtime = create(abi.encodePacked(USES_33_GAS), "USES_33_GAS");
 
         vm.expectRevert(Runnable.ExecutionReverted.selector);
-        Vm.Gas memory usage = runtime.runWithGasLimit(vm, 20);
+        (bytes memory output, Vm.Gas memory usage) = run(20, runtime, Decode.NULL);
+        output.asVoid();
 
         assertEq(usage.gasLimit, 0);
         assertEq(usage.gasTotalUsed, 0);
@@ -294,17 +339,18 @@ contract AssemblerTest is Assembler, Test {
     }
 
     /**
-     * @dev Check that invalid output causes an {MismatchedOutput} error.
+     * @notice Check that invalid output causes an {MismatchedData} error.
      */
-    function test_RevertIf_MismatchedOutputOnIdentityGasMeasurements() external {
+    function test_RevertIf_MismatchedDataOnIdentityGasMeasurements() external {
         RuntimeContract runtime = assemble(IDENTITY);
 
-        vm.expectRevert(Runnable.MismatchedOutput.selector);
-        Vm.Gas memory usage = runtime.runWithGasLimit(vm, 100);
+        (bytes memory output, Vm.Gas memory usage) = run(100, runtime, abi.encode(10));
+        vm.expectRevert(abi.encodeWithSelector(Decode.MismatchedData.selector, 0, "()", 32));
+        output.asVoid();
 
-        assertEq(usage.gasLimit, 0);
-        assertEq(usage.gasTotalUsed, 0);
+        assertEq(usage.gasLimit, 100);
+        assertEq(usage.gasTotalUsed, 18);
         assertEq(usage.gasRefunded, 0);
-        assertEq(usage.gasRemaining, 0);
+        assertEq(usage.gasRemaining, 82);
     }
 }

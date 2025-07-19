@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.27;
 
-import { Assembler, Runnable, RuntimeContract } from "./Assembler.sol";
 import { Test } from "forge-std/Test.sol";
 import { sqrt } from "prb-math/Common.sol";
 
+import { Assembler, Decode, Runnable, RuntimeContract } from "./Assembler.sol";
+
 using Runnable for RuntimeContract;
+using Decode for bytes;
 
 /**
  * @title Unit tests for the Integer Square Root contract.
@@ -13,7 +15,7 @@ using Runnable for RuntimeContract;
  */
 contract Challenge3Test is Assembler, Test {
     /**
-     * @dev Integer Square Root contract, done in EVM bytecode.
+     * @notice Integer Square Root contract, done in EVM bytecode.
      */
     RuntimeContract private immutable SQRT = assemble("src/Challenge3.evm");
 
@@ -26,47 +28,47 @@ contract Challenge3Test is Assembler, Test {
     }
 
     /**
+     * @notice Calculates the square root of `x`, returning its integer part.
+     */
+    function iSqrt(uint256 x) private returns (uint256 root) {
+        return run(SQRT, abi.encode(x)).asUint256();
+    }
+
+    /**
      * @notice Examples from the challenge definition.
      */
     function test_SqrtExample() external {
-        assertEq(SQRT.run(5), 2);
+        assertEq(iSqrt(5), 2);
     }
 
     /**
      * @notice Selected corner cases.
      */
     function test_SqrtSelectedCases() external {
-        assertEq(SQRT.run(0), 0);
-        assertEq(SQRT.run(1), 1);
-        assertEq(SQRT.run(10), 3);
-        assertEq(SQRT.run(99), 9);
-        assertEq(SQRT.run(100), 10);
-        assertEq(SQRT.run(101), 10);
+        assertEq(iSqrt(0), 0);
+        assertEq(iSqrt(1), 1);
+        assertEq(iSqrt(10), 3);
+        assertEq(iSqrt(99), 9);
+        assertEq(iSqrt(100), 10);
+        assertEq(iSqrt(101), 10);
     }
 
     /**
      * @notice Casacading effect of square root on powers of two.
      */
     function test_SqrtPowersOfTwo() external {
-        assertEq(SQRT.run(type(uint16).max), type(uint8).max);
-        assertEq(SQRT.run(type(uint32).max), type(uint16).max);
-        assertEq(SQRT.run(type(uint64).max), type(uint32).max);
-        assertEq(SQRT.run(type(uint128).max), type(uint64).max);
-        assertEq(SQRT.run(type(uint256).max), type(uint128).max);
+        assertEq(iSqrt(type(uint16).max), type(uint8).max);
+        assertEq(iSqrt(type(uint32).max), type(uint16).max);
+        assertEq(iSqrt(type(uint64).max), type(uint32).max);
+        assertEq(iSqrt(type(uint128).max), type(uint64).max);
+        assertEq(iSqrt(type(uint256).max), type(uint128).max);
     }
 
     /**
-     * @notice Precise implementation using `prb-math`.
-     */
-    function isqrt(uint256 x) private noGasMetering returns (uint256 root) {
-        return sqrt(x);
-    }
-
-    /**
-     * @dev Fuzz testing, comparing to a precise implementation.
+     * @notice Fuzz testing, comparing to a precise implementation.
      */
     function testFuzz_Sqrt(uint256 x) external {
-        assertEq(SQRT.run(x), isqrt(x));
+        assertEq(iSqrt(x), sqrt(x));
     }
 
     /**
@@ -77,10 +79,10 @@ contract Challenge3Test is Assembler, Test {
     }
 
     /**
-     * @dev Fuzz testing, focused on very large numbers.
+     * @notice Fuzz testing, focused on very large numbers.
      */
     function testFuzz_SqrtBig(uint256 input) external {
         uint256 x = shuffleUint256(input);
-        assertEq(SQRT.run(x), isqrt(x));
+        assertEq(iSqrt(x), sqrt(x));
     }
 }
