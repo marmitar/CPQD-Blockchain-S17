@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import { Test } from "forge-std/Test.sol";
 import { sqrt } from "prb-math/Common.sol";
 
+import { SqrtGasUsage } from "../script/Challenge3.s.sol";
 import { Assembler, Decode, Runnable, RuntimeContract } from "./Assembler.sol";
 
 using Runnable for RuntimeContract;
@@ -28,6 +29,11 @@ contract Challenge3Test is Assembler, Test {
     }
 
     /**
+     * @notice Functions to estimate gas usage of {SQRT}.
+     */
+    SqrtGasUsage private immutable ESTIMATOR = new SqrtGasUsage();
+
+    /**
      * @notice Maximum gas used by {SQRT}.
      */
     uint16 private constant GAS_LIMIT = 498;
@@ -37,6 +43,8 @@ contract Challenge3Test is Assembler, Test {
      */
     function iSqrt(uint256 x) private noGasMetering returns (uint256 root) {
         root = run(GAS_LIMIT, SQRT, abi.encode(x)).asUint256();
+        uint256 gasUsed = lastCallGas.gasTotalUsed;
+        assertLe(ESTIMATOR.gasDiff(x, gasUsed), 2, "gasDiff");
     }
 
     /**
@@ -69,30 +77,35 @@ contract Challenge3Test is Assembler, Test {
      * @notice Casacading effect of square root on powers of two.
      */
     function test_SqrtPowersOfTwo() external {
-        uint256 UINT8_MAX = type(uint8).max;
-        uint256 UINT16_MAX = type(uint16).max;
-        uint256 UINT32_MAX = type(uint32).max;
-        uint256 UINT64_MAX = type(uint64).max;
-        uint256 UINT128_MAX = type(uint128).max;
-        uint256 UINT256_MAX = type(uint256).max;
-
-        assertEq(iSqrt(UINT16_MAX), UINT8_MAX, "sqrt(UINT16_MAX)");
+        assertEq(iSqrt(2 ** 2 - 1), 2 ** 1 - 1, "sqrt(2**2-1)");
+        assertGasUsed(GAS_LIMIT, 384);
+        assertEq(iSqrt(2 ** 2), 2 ** 1, "sqrt(2**2)");
+        assertGasUsed(GAS_LIMIT, 390);
+        assertEq(iSqrt(2 ** 4 - 1), 2 ** 2 - 1, "sqrt(2**4-1)");
+        assertGasUsed(GAS_LIMIT, 390);
+        assertEq(iSqrt(2 ** 4), 2 ** 2, "sqrt(2**4)");
+        assertGasUsed(GAS_LIMIT, 402);
+        assertEq(iSqrt(2 ** 8 - 1), 2 ** 4 - 1, "sqrt(2**8-1)");
+        assertGasUsed(GAS_LIMIT, 405);
+        assertEq(iSqrt(2 ** 8), 2 ** 4, "sqrt(2**8)");
+        assertGasUsed(GAS_LIMIT, 402);
+        assertEq(iSqrt(2 ** 16 - 1), 2 ** 8 - 1, "sqrt(2**16-1)");
         assertGasUsed(GAS_LIMIT, 426);
-        assertEq(iSqrt(UINT16_MAX + 1), UINT8_MAX + 1, "sqrt(UINT16_MAX + 1)");
+        assertEq(iSqrt(2 ** 16), 2 ** 8, "sqrt(2**16)");
         assertGasUsed(GAS_LIMIT, 402);
-        assertEq(iSqrt(UINT32_MAX), UINT16_MAX, "sqrt(UINT32_MAX)");
+        assertEq(iSqrt(2 ** 32 - 1), 2 ** 16 - 1, "sqrt(2**32-1)");
         assertGasUsed(GAS_LIMIT, 441);
-        assertEq(iSqrt(UINT32_MAX + 1), UINT16_MAX + 1, "sqrt(UINT32_MAX + 1)");
+        assertEq(iSqrt(2 ** 32), 2 ** 16, "sqrt(2**32)");
         assertGasUsed(GAS_LIMIT, 402);
-        assertEq(iSqrt(UINT64_MAX), UINT32_MAX, "sqrt(UINT64_MAX)");
+        assertEq(iSqrt(2 ** 64 - 1), 2 ** 32 - 1, "sqrt(2**64-1)");
         assertGasUsed(GAS_LIMIT, 462);
-        assertEq(iSqrt(UINT64_MAX + 1), UINT32_MAX + 1, "sqrt(UINT64_MAX + 1)");
+        assertEq(iSqrt(2 ** 64), 2 ** 32, "sqrt(2**64)");
         assertGasUsed(GAS_LIMIT, 402);
-        assertEq(iSqrt(UINT128_MAX), UINT64_MAX, "sqrt(UINT128_MAX)");
+        assertEq(iSqrt(2 ** 128 - 1), 2 ** 64 - 1, "sqrt(2**128-1)");
         assertGasUsed(GAS_LIMIT, 477);
-        assertEq(iSqrt(UINT128_MAX + 1), UINT64_MAX + 1, "sqrt(UINT128_MAX + 1)");
+        assertEq(iSqrt(2 ** 128), 2 ** 64, "sqrt(2**128)");
         assertGasUsed(GAS_LIMIT, 402);
-        assertEq(iSqrt(UINT256_MAX), UINT128_MAX, "sqrt(UINT256_MAX)");
+        assertEq(iSqrt(2 ** 256 - 1), 2 ** 128 - 1, "sqrt(2**256-1)");
         assertGasUsed(GAS_LIMIT, 498);
     }
 
@@ -100,11 +113,11 @@ contract Challenge3Test is Assembler, Test {
      * @notice Fuzz testing, comparing to a precise implementation.
      */
     function testFuzz_Sqrt(uint256 x) external {
-        assertEq(iSqrt(x), sqrt(x), "sqrt(0 <= x <= UINT256_MAX)");
+        assertEq(iSqrt(x), sqrt(x), "sqrt(0 <= x <= 2**256 - 1)");
     }
 
     /**
-     * Shuffle fuzzer input so large values are favored.
+     * @notice Shuffle fuzzer input so large values are favored.
      */
     function shuffleUint256(uint256 value) private noGasMetering returns (uint256 shuffled) {
         return uint256(keccak256(abi.encode(value)));
@@ -115,6 +128,6 @@ contract Challenge3Test is Assembler, Test {
      */
     function testFuzz_SqrtBig(uint256 input) external {
         uint256 x = shuffleUint256(input);
-        assertEq(iSqrt(x), sqrt(x), "sqrt(0 <= x <= UINT256_MAX)");
+        assertEq(iSqrt(x), sqrt(x), "sqrt(0 <= x <= 2**256 - 1)");
     }
 }
