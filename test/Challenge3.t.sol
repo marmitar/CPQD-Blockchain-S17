@@ -28,10 +28,15 @@ contract Challenge3Test is Assembler, Test {
     }
 
     /**
+     * @notice Maximum gas used by {SQRT}.
+     */
+    uint16 private constant GAS_LIMIT = 498;
+
+    /**
      * @notice Calculates the square root of `x`, returning its integer part.
      */
-    function iSqrt(uint256 x) private returns (uint256 root) {
-        return run(SQRT, abi.encode(x)).asUint256();
+    function iSqrt(uint256 x) private noGasMetering returns (uint256 root) {
+        root = run(GAS_LIMIT, SQRT, abi.encode(x)).asUint256();
     }
 
     /**
@@ -57,11 +62,22 @@ contract Challenge3Test is Assembler, Test {
      * @notice Casacading effect of square root on powers of two.
      */
     function test_SqrtPowersOfTwo() external {
-        assertEq(iSqrt(type(uint16).max), type(uint8).max, "sqrt(UINT16_MAX)");
-        assertEq(iSqrt(type(uint32).max), type(uint16).max, "sqrt(UINT32_MAX)");
-        assertEq(iSqrt(type(uint64).max), type(uint32).max, "sqrt(UINT64_MAX)");
-        assertEq(iSqrt(type(uint128).max), type(uint64).max, "sqrt(UINT128_MAX)");
-        assertEq(iSqrt(type(uint256).max), type(uint128).max, "sqrt(UINT256_MAX)");
+        uint256 UINT8_MAX = type(uint8).max;
+        uint256 UINT16_MAX = type(uint16).max;
+        uint256 UINT32_MAX = type(uint32).max;
+        uint256 UINT64_MAX = type(uint64).max;
+        uint256 UINT128_MAX = type(uint128).max;
+        uint256 UINT256_MAX = type(uint256).max;
+
+        assertEq(iSqrt(UINT16_MAX), UINT8_MAX, "sqrt(UINT16_MAX)");
+        assertEq(iSqrt(UINT16_MAX + 1), UINT8_MAX + 1, "sqrt(UINT16_MAX + 1)");
+        assertEq(iSqrt(UINT32_MAX), UINT16_MAX, "sqrt(UINT32_MAX)");
+        assertEq(iSqrt(UINT32_MAX + 1), UINT16_MAX + 1, "sqrt(UINT32_MAX + 1)");
+        assertEq(iSqrt(UINT64_MAX), UINT32_MAX, "sqrt(UINT64_MAX)");
+        assertEq(iSqrt(UINT64_MAX + 1), UINT32_MAX + 1, "sqrt(UINT64_MAX + 1)");
+        assertEq(iSqrt(UINT128_MAX), UINT64_MAX, "sqrt(UINT128_MAX)");
+        assertEq(iSqrt(UINT128_MAX + 1), UINT64_MAX + 1, "sqrt(UINT128_MAX + 1)");
+        assertEq(iSqrt(UINT256_MAX), UINT128_MAX, "sqrt(UINT256_MAX)");
     }
 
     /**

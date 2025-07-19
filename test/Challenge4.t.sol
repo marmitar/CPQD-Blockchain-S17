@@ -34,18 +34,17 @@ contract Challenge4Test is Assembler, Test {
     /**
      * @notice Precise implementation using `prb-math`.
      */
-    function burn(uint256 gas) private returns (Vm.Gas memory usage) {
-        (bytes memory output, Vm.Gas memory gasUsage) = run(gas, BURNER, Decode.NULL);
-        output.asVoid();
-        return gasUsage;
+    function burn(uint256 gas) private noGasMetering {
+        run(gas, BURNER, Decode.NULL).asVoid();
+        assertGasUsed(gas >= LIMIT ? gas : 0);
     }
 
     /**
      * @notice Check the very first two passing gas limits.
      */
     function test_BurnerLowerLimit() external {
-        assertGasUsed(burn(LIMIT), LIMIT);
-        assertGasUsed(burn(LIMIT + 1), LIMIT + 1);
+        burn(LIMIT);
+        burn(LIMIT + 1);
     }
 
     /**
@@ -53,7 +52,7 @@ contract Challenge4Test is Assembler, Test {
      */
     function test_RevertIf_LessThanLimit() external {
         vm.expectRevert(Runnable.ExecutionReverted.selector);
-        assertGasUsed(burn(LIMIT - 1), 0);
+        burn(LIMIT - 1);
     }
 
     /**
@@ -63,7 +62,7 @@ contract Challenge4Test is Assembler, Test {
     function testFuzz_BurnALotOfGas(uint16 gasLimit) external {
         vm.assume(gasLimit >= LIMIT);
 
-        assertGasUsed(burn(gasLimit), gasLimit);
+        burn(gasLimit);
     }
 
     /**
@@ -74,7 +73,7 @@ contract Challenge4Test is Assembler, Test {
         // more than 1e9 and the test goes out of gas
         vm.assume(gasLimit >= LIMIT && gasLimit < 1e9);
 
-        assertGasUsed(burn(gasLimit), gasLimit);
+        burn(gasLimit);
     }
 
     /**
@@ -84,6 +83,6 @@ contract Challenge4Test is Assembler, Test {
         vm.assume(gasLimit < LIMIT);
 
         vm.expectRevert(Runnable.ExecutionReverted.selector);
-        assertGasUsed(burn(gasLimit), 0);
+        burn(gasLimit);
     }
 }

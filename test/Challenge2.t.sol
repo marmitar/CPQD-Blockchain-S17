@@ -28,10 +28,16 @@ contract Challenge2Test is Assembler, Test {
     }
 
     /**
+     * @notice Gas used by {CIRCLE_AREA}.
+     */
+    uint8 private constant GAS_LIMIT = 51;
+
+    /**
      * @notice Calculate the area of a circle of the give `radius`, rounded to the nearest integer.
      */
-    function circleArea(uint256 radius) private returns (uint256 area) {
-        return run(CIRCLE_AREA, abi.encode(radius)).asUint256();
+    function circleArea(uint256 radius) private noGasMetering returns (uint256 area) {
+        area = run(GAS_LIMIT, CIRCLE_AREA, abi.encode(radius)).asUint256();
+        assertGasUsed(GAS_LIMIT, GAS_LIMIT);
     }
 
     /**

@@ -188,49 +188,40 @@ abstract contract Assembler is TestBase, StdCheats {
 
     /**
      * @notice Executes the {RuntimeContract} and verify successful exection. Input and output unaltered.
-     * Gas usage is mesured and returned.
+     * @dev Gas usage is mesured and stored in {lastCallGas}.
      */
     /// forge-config: default.optimizer-runs = 2000000
     function run(uint256 gasLimit, RuntimeContract runtime, bytes memory input)
         internal
         noGasMetering
-        returns (bytes memory output, Vm.Gas memory usage)
+        returns (bytes memory output)
     {
         vm.resumeGasMetering();
-        (bytes memory result, Vm.Gas memory gasUsage) = runtime.staticCall(gasLimit, vm, input);
+        (output, lastCallGas) = runtime.staticCall(gasLimit, vm, input);
         vm.pauseGasMetering();
-
-        return (result, gasUsage);
     }
 
     /**
-     * @notice Pre-defined gas limit for bytecode contracts.
+     * @notice Gas usage in the last {RuntimeContract} call.
      */
-    uint256 private constant DEFAULT_GAS_LIMIT = 100_000;
-
-    /**
-     * @notice Executes the {RuntimeContract} and verify successful exection. Input and output unaltered.
-     */
-    function run(RuntimeContract runtime, bytes memory input) internal noGasMetering returns (bytes memory output) {
-        (output,) = run(DEFAULT_GAS_LIMIT, runtime, input);
-    }
+    Vm.Gas internal lastCallGas;
 
     /**
      * @notice Verifies that an specific amount of gas was used.
      */
-    function assertGasUsed(Vm.Gas memory usage, uint256 gasLimit, uint256 gasUsed) internal noGasMetering {
-        vm.assertEq(usage.gasLimit, gasLimit, "gasLimit");
-        vm.assertEq(usage.gasTotalUsed, gasUsed, "gasTotalUsed");
-        vm.assertEq(usage.gasMemoryUsed, 0, "gasMemoryUsed (DEPRECATED)");
-        vm.assertEq(usage.gasRefunded, 0, "gasRefunded");
-        vm.assertEq(usage.gasRemaining, gasLimit - gasUsed, "gasRemaining");
+    function assertGasUsed(uint256 gasLimit, uint256 gasUsed) internal noGasMetering {
+        vm.assertEq(lastCallGas.gasLimit, gasLimit, "gasLimit");
+        vm.assertEq(lastCallGas.gasTotalUsed, gasUsed, "gasTotalUsed");
+        vm.assertEq(lastCallGas.gasMemoryUsed, 0, "gasMemoryUsed (DEPRECATED)");
+        vm.assertEq(lastCallGas.gasRefunded, 0, "gasRefunded");
+        vm.assertEq(lastCallGas.gasRemaining, gasLimit - gasUsed, "gasRemaining");
     }
 
     /**
      * @notice Verifies that all gas was used, none remain.
      */
-    function assertGasUsed(Vm.Gas memory usage, uint256 gasLimit) internal noGasMetering {
-        assertGasUsed(usage, gasLimit, gasLimit);
+    function assertGasUsed(uint256 gasLimit) internal noGasMetering {
+        assertGasUsed(gasLimit, gasLimit);
     }
 }
 
@@ -256,7 +247,7 @@ contract AssemblerTest is Assembler, Test {
      */
     function testFuzz_BytecodeRuns(uint256 value) external {
         RuntimeContract runtime = assemble(IDENTITY);
-        assertEq(run(runtime, abi.encode(value)).asUint256(), value, "IDENTITY output");
+        assertEq(run(18, runtime, abi.encode(value)).asUint256(), value, "IDENTITY output");
         assertEq(vm.getLabel(RuntimeContract.unwrap(runtime)), IDENTITY, "IDENTITY label");
     }
 
@@ -287,9 +278,16 @@ contract AssemblerTest is Assembler, Test {
     }
 
     /**
-     * @notice Hexadecimal value of the `REVERT` instruction.
+     * @notice Bytecode with the `REVERT` instruction.
+     *
+     * PUSH2 0x3a28
+     * PUSH0
+     * MSTORE
+     * PUSH1 0x02
+     * PUSH1 0x1e
+     * REVERT
      */
-    bytes1 private constant REVERT_BYTECODE = 0xfd;
+    bytes10 private constant REVERT_BYTECODE = 0x613a285f526002601efd;
 
     /**
      * @notice Check that a revert in the bytecode causes an {ExecutionReverted} error.
@@ -297,8 +295,8 @@ contract AssemblerTest is Assembler, Test {
     function test_RevertIf_BytecodeReverts() external {
         RuntimeContract runtime = create(abi.encodePacked(REVERT_BYTECODE), "REVERT_BYTECODE");
 
-        vm.expectRevert(Runnable.ExecutionReverted.selector);
-        assertEq(run(runtime, Decode.NULL), Decode.NULL, "reverted run");
+        vm.expectRevert(bytes(":("));
+        assertEq(run(17, runtime, Decode.NULL), Decode.NULL, "reverted run");
     }
 
     /**
@@ -312,7 +310,7 @@ contract AssemblerTest is Assembler, Test {
     function test_RevertIf_MismatchedDataOnStop() external {
         RuntimeContract runtime = create(abi.encodePacked(STOP_BYTECODE), "STOP_BYTECODE");
 
-        bytes memory output = run(runtime, Decode.NULL);
+        bytes memory output = run(0, runtime, Decode.NULL);
         vm.expectRevert(abi.encodeWithSelector(Decode.MismatchedData.selector, 32, "uint256", 0));
         assertEq(output.asUint256(), 0, "not enough bytes for uint256");
     }
@@ -322,10 +320,9 @@ contract AssemblerTest is Assembler, Test {
      */
     function test_StopDoesntSpendGas() external {
         RuntimeContract runtime = create(abi.encodePacked(STOP_BYTECODE), "STOP_BYTECODE");
-        (bytes memory output, Vm.Gas memory usage) = run(1, runtime, Decode.NULL);
-        output.asVoid();
+        run(1, runtime, Decode.NULL).asVoid();
 
-        assertGasUsed(usage, 1, 0);
+        assertGasUsed(1, 0);
     }
 
     /**
@@ -344,10 +341,9 @@ contract AssemblerTest is Assembler, Test {
         RuntimeContract runtime = create(abi.encodePacked(USES_33_GAS), "USES_33_GAS");
 
         vm.expectRevert(Runnable.ExecutionReverted.selector);
-        (bytes memory output, Vm.Gas memory usage) = run(20, runtime, Decode.NULL);
-        output.asVoid();
+        run(20, runtime, Decode.NULL).asVoid();
 
-        assertGasUsed(usage, 0);
+        assertGasUsed(0);
     }
 
     /**
@@ -356,10 +352,10 @@ contract AssemblerTest is Assembler, Test {
     function test_RevertIf_MismatchedDataOnIdentityGasMeasurements() external {
         RuntimeContract runtime = assemble(IDENTITY);
 
-        (bytes memory output, Vm.Gas memory usage) = run(100, runtime, abi.encode(10));
+        bytes memory output = run(100, runtime, abi.encode(10));
         vm.expectRevert(abi.encodeWithSelector(Decode.MismatchedData.selector, 0, "()", 32));
         output.asVoid();
 
-        assertGasUsed(usage, 100, 18);
+        assertGasUsed(100, 18);
     }
 }
