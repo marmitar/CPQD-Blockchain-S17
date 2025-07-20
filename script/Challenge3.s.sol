@@ -20,14 +20,14 @@ contract SqrtGasUsage is Script {
     // forgefmt: disable-start
     /** @notice Gas used for the first instructions of {SQRT}. */
     uint256 private constant HEADER = 2e18 + 4 * 3e18 + 10e18;
-    /** @notice Gas used for algorithm initialization, `result` and `xAux`. */
-    uint256 private constant INIT = 2 * 3e18;
+    /** @notice Gas used for the first iteration of `log2(x)`. */
+    uint256 private constant MSB_FIRST = 8 * 3e18;
     /** @notice Gas used for comparison in the unrolled loop for `log2(x)`. */
-    uint256 private constant SHIFT_CMP = 4 * 3e18 + 10e18 + 1e18;
-    /** @notice Gas used for the branch taken body of `log2(x)`. */
-    uint256 private constant SHIFT_TAKEN = 6 * 3e18;
-    /** @notice Gas used for the very last branch taken of `log2(x)`. */
-    uint256 private constant SHIFT_LAST = 2 * 3e18;
+    uint256 private constant MSB_STEP = 10 * 3e18;
+    /** @notice Gas used for the very last iteration of `log2(x)`. */
+    uint256 private constant MSB_LAST = 6 * 3e18;
+    /** @notice Initialization of `x0` for Newton's method. */
+    uint256 private constant NEWTON_INIT = 5 * 3e18;
     /** @notice Gas used for one iteration of the unrolled loop for Newton-Raphson's method. */
     uint256 private constant NEWTON_STEP = 5 * 3e18 + 5e18;
     /** @notice Gas used for finalization of Newton-Raphson's method. */
@@ -44,24 +44,14 @@ contract SqrtGasUsage is Script {
          * @notice Probability that `x` is not zero.
          */
         UD60x18 notZero;
-        /**
-         * @notice Probability for each group of bits that trigger each branch in `log2(x)`.
-         */
-        UD60x18[7] bitSets;
     }
 
     /**
      * @notice Estimate gas used by the {SQRT} EVM contract for the given `input` distribution.
      */
     function estimatedGasUsageFor(InputDistribution memory input) private pure returns (UD60x18 expected) {
-        UD60x18 gasNonZero = ud(INIT);
-
-        gasNonZero = gasNonZero + ud(SHIFT_CMP) + input.bitSets[0] * ud(SHIFT_LAST);
-        for (uint8 i = 1; i < 7; i++) {
-            gasNonZero = gasNonZero + ud(SHIFT_CMP) + input.bitSets[i] * ud(SHIFT_TAKEN);
-        }
-
-        gasNonZero = gasNonZero + ud(8e18) * ud(NEWTON_STEP) + ud(NEWTON_FIN);
+        UD60x18 gasNonZero = ud(MSB_FIRST) + ud(5e18) * ud(MSB_STEP) + ud(MSB_LAST);
+        gasNonZero = gasNonZero + ud(NEWTON_INIT) + ud(8e18) * ud(NEWTON_STEP) + ud(NEWTON_FIN);
 
         return ud(HEADER) + input.notZero * gasNonZero + ud(RETURN);
     }
@@ -80,11 +70,9 @@ contract SqrtGasUsage is Script {
      */
     function averageDistribution() private pure returns (InputDistribution memory dist) {
         UD60x18 pZero = inv256(1); // 1/2**256
-        UD60x18 pBitSet = HALF_UNIT;
 
         return InputDistribution({
-            notZero: UNIT - pZero,
-            bitSets: [pBitSet, pBitSet, pBitSet, pBitSet, pBitSet, pBitSet, pBitSet]
+            notZero: UNIT - pZero
         });
     }
 
@@ -111,10 +99,7 @@ contract SqrtGasUsage is Script {
         UD60x18 pNotZero = dist.notZero;
 
         // covariance ignored as it is too small to be representable with UD60x18
-        variance = combinedVariance(pNotZero, dist.bitSets[0]) * ud(SHIFT_LAST).powu(2);
-        for (uint8 i = 1; i < 7; i++) {
-            variance = variance + combinedVariance(pNotZero, dist.bitSets[i]) * ud(SHIFT_TAKEN).powu(2);
-        }
+        variance = combinedVariance(pNotZero, pNotZero) * ud(MSB_LAST).powu(2);
     }
 
     /**
@@ -170,11 +155,8 @@ contract SqrtGasUsage is Script {
      * @notice Find the distribution of each descriptor of `x`. It will be either one or zero for each value.
      */
     function inputDistributionOf(uint256 x) public pure returns (InputDistribution memory dist) {
-        bool[7] memory bs = bitSetsOf(x);
-
         return InputDistribution({
-            notZero: d(x != 0),
-            bitSets: [d(bs[0]), d(bs[1]), d(bs[2]), d(bs[3]), d(bs[4]), d(bs[5]), d(bs[6])]
+            notZero: d(x != 0)
         });
     }
 

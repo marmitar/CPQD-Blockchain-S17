@@ -13,118 +13,100 @@ push1 done
 jumpi
 ## Stack: x
 
-## Find the closest power of two: $x_0 = 2^{\lfloor \log_2(x) / 2 \rfloor}$.
-# xAux = x
+## Find the most significant bit, which doubles as `log2(x)`.
+## if (x >= 2**128)
+push16 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+dup2
+gt
+# msb += 128
+push1 7
+shl
+# x >>= 128
+dup2
+dup2
+shr
+## if (x >= 2**64)
+push8 0xFFFFFFFFFFFFFFFF
+dup2
+gt
+# msb += 64
+push1 6
+shl
 dup1
-# result = 1
-push1 0x01
-# if (xAux >= 2 ** 128)
+swap3
+or
+# x >>= 64
+swap2
+shr
+## if (x >= 2**32)
+push4 0xFFFFFFFF
 dup2
-push17 0x0100000000000000000000000000000000
 gt
-push1 skip64
-jumpi
-    # xAux >>= 128
-    swap1
-    push1 0x80
-    shr
-    # result <<= 64
-    swap1
-    push1 0x40
-    shl
-skip64:
-    jumpdest
-# if (xAux >= 2 ** 64)
+# msb += 32
+push1 5
+shl
+dup1
+swap3
+or
+# x >>= 32
+swap2
+shr
+## if (x >= 2**16)
+push2 0xFFFF
 dup2
-push9 0x010000000000000000
 gt
-push1 skip32
-jumpi
-    # xAux >>= 64
-    swap1
-    push1 0x40
-    shr
-    # result <<= 32
-    swap1
-    push1 0x20
-    shl
-skip32:
-    jumpdest
-# if (xAux >= 2 ** 32)
+# msb += 16
+push1 4
+shl
+dup1
+swap3
+or
+# x >>= 16
+swap2
+shr
+## if (x >= 2**8)
+push1 0xFF
 dup2
-push5 0x0100000000
 gt
-push1 skip16
-jumpi
-    # xAux >>= 32
-    swap1
-    push1 0x20
-    shr
-    # result <<= 16
-    swap1
-    push1 0x10
-    shl
-skip16:
-    jumpdest
-# if (xAux >= 2 ** 16)
+# msb += 8
+push1 3
+shl
+dup1
+swap3
+or
+# x >>= 8
+swap2
+shr
+## if (x >= 2**4)
+push1 0x0F
 dup2
-push3 0x010000
 gt
-push1 skip8
-jumpi
-    # xAux >>= 16
-    swap1
-    push1 0x10
-    shr
-    # result <<= 8
-    swap1
-    push1 0x08
-    shl
-skip8:
-    jumpdest
-# if (xAux >= 2 ** 8)
-dup2
-push2 0x0100
-gt
-push1 skip4
-jumpi
-    # xAux >>= 8
-    swap1
-    push1 0x08
-    shr
-    # result <<= 4
-    swap1
-    push1 0x04
-    shl
-skip4:
-    jumpdest
-# if (xAux >= 2 ** 4)
-dup2
-push1 0x10
-gt
-push1 skip2
-jumpi
-    # xAux >>= 4
-    swap1
-    push1 0x04
-    shr
-    # result <<= 2
-    swap1
-    push1 0x02
-    shl
-skip2:
-    jumpdest
-# if (xAux >= 2 ** 2)
-swap1
+# msb += 4
+push1 2
+shl
+dup1
+swap3
+or
+# x >>= 4
+swap2
+shr
+## if (x >= 2**2)
 push1 0x04
-gt
-push1 skip1
-jumpi
-    # result <<= 1
-    push1 0x01
-    shl
-skip1:
-    jumpdest
+lt
+# msb += 2
+push1 1
+shl
+swap1
+or
+## Stack: msb, x
+
+## Get the closest power of two: $x_0 = 2^{\lfloor \log_2(x) / 2 \rfloor}$.
+## This will be our initial guess for Newton's method, which has at least one bit correct.
+push1 1
+shr
+push1 1
+swap1
+shl
 ## Stack: result, x
 
 ## Now we have 1 bit correct of $\sqrt{x}$. The next 7 iterations of Newton's method will expand it into 256 bits.
@@ -133,49 +115,49 @@ dup1
 dup3
 div
 add
-push1 0x01
+push1 1
 shr
 # 2: result = (result + x / result) >> 1
 dup1
 dup3
 div
 add
-push1 0x01
+push1 1
 shr
 # 3: result = (result + x / result) >> 1
 dup1
 dup3
 div
 add
-push1 0x01
+push1 1
 shr
 # 4: result = (result + x / result) >> 1
 dup1
 dup3
 div
 add
-push1 0x01
+push1 1
 shr
 # 5: result = (result + x / result) >> 1
 dup1
 dup3
 div
 add
-push1 0x01
+push1 1
 shr
 # 6: result = (result + x / result) >> 1
 dup1
 dup3
 div
 add
-push1 0x01
+push1 1
 shr
 # 7: result = (result + x / result) >> 1
 dup1
 dup3
 div
 add
-push1 0x01
+push1 1
 shr
 ## Stack: result, x
 
@@ -186,12 +168,12 @@ swap2
 div
 dup2
 add
-push1 0x01
+push1 1
 shr
 ## The mean of the last two iteration will give the correct value, even if in a `⌊√x⌋` => `⌊√x⌋ + 1` cycle.
 # result = (result + nextResult) >> 1
 add
-push1 0x01
+push1 1
 shr
 ## Stack: result
 

@@ -2,196 +2,185 @@
 /// @author Tiago de Paula <tiagodepalves@gmail.com>
 /// @notice Calculate the integer square root $0 \leq n < 2^{256}$.
 /// @dev Based on <https://github.com/PaulRBerg/prb-math/blob/v4.1.0/src/Common.sol#L587-L675>.
-PUSH0
-CALLDATALOAD
+push0
+calldataload
 /// Stack: x
 
 /// Special case for 0, to avoid division by zero.
-DUP1
-ISZERO
-PUSH1 0xd1
-JUMPI
+dup1
+iszero
+push1 0xb3
+jumpi
 /// Stack: x
 
-/// Find the closest power of two: $x_0 = 2^{\lfloor \log_2(x) / 2 \rfloor}$.
-// xAux = x
-DUP1
-// result = 1
-PUSH1 0x01
-// if (xAux >= 2 ** 128)
-DUP2
-PUSH17 0x0100000000000000000000000000000000
-GT
-PUSH1 0x29
-JUMPI
-    // xAux >>= 128
-    SWAP1
-    PUSH1 0x80
-    SHR
-    // result <<= 64
-    SWAP1
-    PUSH1 0x40
-    SHL
-JUMPDEST
-// if (xAux >= 2 ** 64)
-DUP2
-PUSH9 0x010000000000000000
-GT
-PUSH1 0x41
-JUMPI
-    // xAux >>= 64
-    SWAP1
-    PUSH1 0x40
-    SHR
-    // result <<= 32
-    SWAP1
-    PUSH1 0x20
-    SHL
-JUMPDEST
-// if (xAux >= 2 ** 32)
-DUP2
-PUSH5 0x0100000000
-GT
-PUSH1 0x55
-JUMPI
-    // xAux >>= 32
-    SWAP1
-    PUSH1 0x20
-    SHR
-    // result <<= 16
-    SWAP1
-    PUSH1 0x10
-    SHL
-JUMPDEST
-// if (xAux >= 2 ** 16)
-DUP2
-PUSH3 0x010000
-GT
-PUSH1 0x67
-JUMPI
-    // xAux >>= 16
-    SWAP1
-    PUSH1 0x10
-    SHR
-    // result <<= 8
-    SWAP1
-    PUSH1 0x08
-    SHL
-JUMPDEST
-// if (xAux >= 2 ** 8)
-DUP2
-PUSH2 0x0100
-GT
-PUSH1 0x78
-JUMPI
-    // xAux >>= 8
-    SWAP1
-    PUSH1 0x08
-    SHR
-    // result <<= 4
-    SWAP1
-    PUSH1 0x04
-    SHL
-JUMPDEST
-// if (xAux >= 2 ** 4)
-DUP2
-PUSH1 0x10
-GT
-PUSH1 0x88
-JUMPI
-    // xAux >>= 4
-    SWAP1
-    PUSH1 0x04
-    SHR
-    // result <<= 2
-    SWAP1
-    PUSH1 0x02
-    SHL
-JUMPDEST
-// if (xAux >= 2 ** 2)
-SWAP1
-PUSH1 0x04
-GT
-PUSH1 0x93
-JUMPI
-    // result <<= 1
-    PUSH1 0x01
-    SHL
-JUMPDEST
+/// Find the most significant bit, which doubles as `log2(x)`.
+/// if (x >= 2**128)
+push16 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+dup2
+gt
+// msb += 128
+push1 7
+shl
+// x >>= 128
+dup2
+dup2
+shr
+/// if (x >= 2**64)
+push8 0xFFFFFFFFFFFFFFFF
+dup2
+gt
+// msb += 64
+push1 6
+shl
+dup1
+swap3
+or
+// x >>= 64
+swap2
+shr
+/// if (x >= 2**32)
+push4 0xFFFFFFFF
+dup2
+gt
+// msb += 32
+push1 5
+shl
+dup1
+swap3
+or
+// x >>= 32
+swap2
+shr
+/// if (x >= 2**16)
+push2 0xFFFF
+dup2
+gt
+// msb += 16
+push1 4
+shl
+dup1
+swap3
+or
+// x >>= 16
+swap2
+shr
+/// if (x >= 2**8)
+push1 0xFF
+dup2
+gt
+// msb += 8
+push1 3
+shl
+dup1
+swap3
+or
+// x >>= 8
+swap2
+shr
+/// if (x >= 2**4)
+push1 0x0F
+dup2
+gt
+// msb += 4
+push1 2
+shl
+dup1
+swap3
+or
+// x >>= 4
+swap2
+shr
+/// if (x >= 2**2)
+push1 0x04
+lt
+// msb += 2
+push1 1
+shl
+swap1
+or
+/// Stack: msb, x
+
+/// Get the closest power of two: $x_0 = 2^{\lfloor \log_2(x) / 2 \rfloor}$.
+/// This will be our initial guess for Newton's method, which has at least one bit correct.
+push1 1
+shr
+push1 1
+swap1
+shl
 /// Stack: result, x
 
 /// Now we have 1 bit correct of $\sqrt{x}$. The next 7 iterations of Newton's method will expand it into 256 bits.
 // 1: result = (result + x / result) >> 1
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 0x01
-SHR
+dup1
+dup3
+div
+add
+push1 1
+shr
 // 2: result = (result + x / result) >> 1
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 0x01
-SHR
+dup1
+dup3
+div
+add
+push1 1
+shr
 // 3: result = (result + x / result) >> 1
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 0x01
-SHR
+dup1
+dup3
+div
+add
+push1 1
+shr
 // 4: result = (result + x / result) >> 1
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 0x01
-SHR
+dup1
+dup3
+div
+add
+push1 1
+shr
 // 5: result = (result + x / result) >> 1
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 0x01
-SHR
+dup1
+dup3
+div
+add
+push1 1
+shr
 // 6: result = (result + x / result) >> 1
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 0x01
-SHR
+dup1
+dup3
+div
+add
+push1 1
+shr
 // 7: result = (result + x / result) >> 1
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 0x01
-SHR
+dup1
+dup3
+div
+add
+push1 1
+shr
 /// Stack: result, x
 
 /// We do an extra iteration to validate convergence. This is only really required for almost perfect squares.
 // 8: nextResult = (result + x / result) >> 1
-DUP1
-SWAP2
-DIV
-DUP2
-ADD
-PUSH1 0x01
-SHR
+dup1
+swap2
+div
+dup2
+add
+push1 1
+shr
 /// The mean of the last two iteration will give the correct value, even if in a `⌊√x⌋` => `⌊√x⌋ + 1` cycle.
 // result = (result + nextResult) >> 1
-ADD
-PUSH1 0x01
-SHR
+add
+push1 1
+shr
 /// Stack: result
 
 // return result
-JUMPDEST
-PUSH0
-MSTORE
-PUSH1 0x20
-PUSH0
-RETURN
+jumpdest
+push0
+mstore
+push1 0x20
+push0
+return
