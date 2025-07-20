@@ -30,7 +30,7 @@ contract Challenge2Test is Assembler, Test {
     /**
      * @notice Gas used by {CIRCLE_AREA}.
      */
-    uint8 private constant GAS_LIMIT = 51;
+    uint8 private constant GAS_LIMIT = 48;
 
     /**
      * @notice Calculate the area of a circle of the give `radius`, rounded to the nearest integer.
@@ -44,8 +44,8 @@ contract Challenge2Test is Assembler, Test {
      * @notice Precise implementation of {circleArea} using [`prb-math`](https://github.com/PaulRBerg/prb-math).
      */
     function expectedCircleArea(uint256 radius) private pure returns (uint256 area) {
-        UD60x18 uArea = convert(radius).powu(2).mul(PI);
-        return convert(uArea.add(ud(0.5e18)));
+        UD60x18 uArea = convert(radius).powu(2) * PI;
+        return convert(uArea + ud(0.5e18));
     }
 
     /**
@@ -69,16 +69,21 @@ contract Challenge2Test is Assembler, Test {
     }
 
     /**
+     * @notice Radius must be between 0 and this value.
+     */
+    uint16 private MAX_RADIUS = 65_535;
+
+    /**
      * @notice Guarantee that even the largest input radius can't overflow.
      */
     function test_CircleAreaNoOverflow() external {
-        assertEq(circleArea(65_535), 13_492_625_933, "r = UINT16_MAX");
+        assertEq(circleArea(MAX_RADIUS), 13_492_625_933, "r = MAX_RADIUS");
     }
 
     /**
      * @notice Fuzz testing, comparing to a precise implementation.
      */
     function testFuzz_CircleArea(uint16 radius) external {
-        assertEq(circleArea(radius), expectedCircleArea(radius), "0 <= r <= UINT16_MAX");
+        assertEq(circleArea(radius), expectedCircleArea(radius), "0 <= r <= MAX_RADIUS");
     }
 }

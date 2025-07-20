@@ -1,24 +1,28 @@
 /// @title Circle Area.
 /// @author Tiago de Paula <tiagodepalves@gmail.com>
 /// @notice Calculate the integer approximation for area the of a circle of radius $0 \leq r < 2^{16}$.
-PUSH0
-CALLDATALOAD
+/// @notice Gas usage: exactly 48 gas is used.
 
+// Q: denominator of the chosen π approximation
+push28 0x0d8656913b7b544056da0cfaaf6439d8e836a4efca1917f26d1ee493
+// Q/2
+push28 0x06c32b489dbdaa202b6d067d57b21cec741b5277e50c8bf9368f7249
+// P: numerator of the π fraction
+push28 0x2a7d419042d27fb662d1be44f5b2fcccc28452d3feda50d76f29ab89
+
+push0
+calldataload
 // calculate $r^2$
-DUP1
-MUL
+dup1
+mul
 // do: $(P \times r^2 + Q/2) / Q$, where $P/Q \approx \pi$
-PUSH28 0x2a7d419042d27fb662d1be44f5b2fcccc28452d3feda50d76f29ab89
-MUL
-PUSH28 0x06c32b489dbdaa202b6d067d57b21cec741b5277e50c8bf9368f7249
-ADD
-PUSH28 0x0d8656913b7b544056da0cfaaf6439d8e836a4efca1917f26d1ee493
-SWAP1
-DIV
+mul
+add
+div
 
 // return
-PUSH0
-MSTORE
-PUSH1 0x20
-PUSH0
-RETURN
+push0
+mstore
+push1 0x20
+push0
+return
