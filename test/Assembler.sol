@@ -100,11 +100,11 @@ library Decode {
  * @title Test utility for assembling EVM bytecode at runtime.
  * @author Tiago de Paula <tiagodepalves@gmail.com>
  */
-contract Assembler is TestBase, StdCheats {
+abstract contract Assembler is TestBase, StdCheats {
     /**
      * @notice Assembles bytecode from file located at `pathToMnemonic` and create a new runtime contract with it.
      */
-    function assemble(string memory pathToMnemonic) public returns (RuntimeContract runtime) {
+    function assemble(string memory pathToMnemonic) internal returns (RuntimeContract runtime) {
         return create(eas(pathToMnemonic), pathToMnemonic);
     }
 

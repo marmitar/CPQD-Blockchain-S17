@@ -1,18 +1,11 @@
 /// @title Integer Square Root.
 /// @author Tiago de Paula <tiagodepalves@gmail.com>
 /// @notice Calculate the integer square root $0 \leq n < 2^{256}$.
-/// @notice Gas usage: 417 gas required (except for 0), uses 417 gas maximum.
+/// @dev Gas usage: 397 gas required, uses 397 gas maximum.
 /// @dev Based on <https://github.com/PaulRBerg/prb-math/blob/v4.1.0/src/Common.sol#L587-L675>.
 
 push0
 calldataload
-/// Stack: x
-
-/// Special case for 0, to avoid division by zero.
-dup1
-iszero
-push1 0xb3
-jumpi
 /// Stack: x
 
 /// Find the most significant bit, which doubles as `log2(x)`.
@@ -112,6 +105,7 @@ shl
 /// Stack: result, x
 
 /// Now we have 1 bit correct of $\sqrt{x}$. The next 7 iterations of Newton's method will expand it into 256 bits.
+/// Note: division by zero returns 0, so not an issue here.
 // 1: result = (result + x / result) >> 1
 dup1
 dup3
@@ -180,7 +174,6 @@ shr
 /// Stack: result
 
 // return result
-jumpdest
 push0
 mstore
 push1 0x20

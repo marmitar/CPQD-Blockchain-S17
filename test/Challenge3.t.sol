@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 import { Test } from "forge-std/Test.sol";
 
-import { SqrtGasUsage } from "../script/Challenge3.s.sol";
 import { Assembler, Decode, Runnable, RuntimeContract } from "./Assembler.sol";
 
 using Runnable for RuntimeContract;
@@ -28,21 +27,16 @@ contract Challenge3Test is Assembler, Test {
     }
 
     /**
-     * @notice Functions to estimate gas usage of {SQRT}.
-     */
-    SqrtGasUsage private immutable ESTIMATOR = new SqrtGasUsage();
-
-    /**
      * @notice Maximum gas used by {SQRT}.
      */
-    uint16 private constant GAS_LIMIT = 417;
+    uint16 private constant GAS_LIMIT = 397;
 
     /**
      * @notice Calculates the square root of `x`, returning its integer part.
      */
     function iSqrt(uint256 x) private noGasMetering returns (uint256 root) {
         root = run(GAS_LIMIT, SQRT, abi.encode(x)).asUint256();
-        assertGasUsed(GAS_LIMIT, ESTIMATOR.gasUsage(x));
+        assertGasUsed(GAS_LIMIT);
     }
 
     /**
