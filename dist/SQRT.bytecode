@@ -80,7 +80,7 @@ shr
 push1 0x04
 lt
 // msb1 = (x >= 2**2) ? 2 : 0
-push1 1
+dup8
 shl
 // msb = msb1 | msb2 | msb3 | msb4 | msb5 | msb6 | msb7
 or
@@ -93,7 +93,7 @@ or
 
 /// Get the closest power of two: $x_0 = 2^{\lfloor \log_2(x) / 2 \rfloor}$.
 /// This will be our initial guess for Newton's method, which has at least one bit correct.
-push1 1
+dup2
 shr
 shl
 /// Stack: result, x

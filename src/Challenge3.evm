@@ -1,7 +1,7 @@
 ## @title Integer Square Root.
 ## @author Tiago de Paula <tiagodepalves@gmail.com>
 ## @notice Calculate the integer square root $0 \leq n < 2^{256}$.
-## @dev Gas usage: 376 gas required, uses 376 gas maximum.
+## @notice Gas usage: exactly 376 gas is used.
 ## @dev Based on <https://github.com/PaulRBerg/prb-math/blob/v4.1.0/src/Common.sol#L587-L675>.
 
 push0
@@ -80,7 +80,7 @@ shr
 push1 0x04
 lt
 # msb1 = (x >= 2**2) ? 2 : 0
-push1 1
+dup8
 shl
 # msb = msb1 | msb2 | msb3 | msb4 | msb5 | msb6 | msb7
 or
@@ -93,7 +93,7 @@ or
 
 ## Get the closest power of two: $x_0 = 2^{\lfloor \log_2(x) / 2 \rfloor}$.
 ## This will be our initial guess for Newton's method, which has at least one bit correct.
-push1 1
+dup2
 shr
 shl
 ## Stack: result, x
