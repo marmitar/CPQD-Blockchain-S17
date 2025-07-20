@@ -1,7 +1,9 @@
 /// @title Integer Square Root.
 /// @author Tiago de Paula <tiagodepalves@gmail.com>
 /// @notice Calculate the integer square root $0 \leq n < 2^{256}$.
+/// @notice Gas usage: 417 gas required (except for 0), uses 417 gas maximum.
 /// @dev Based on <https://github.com/PaulRBerg/prb-math/blob/v4.1.0/src/Common.sol#L587-L675>.
+
 push0
 calldataload
 /// Stack: x
