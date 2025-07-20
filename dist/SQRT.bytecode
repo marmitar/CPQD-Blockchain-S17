@@ -9,7 +9,7 @@ CALLDATALOAD
 /// Special case for 0, to avoid division by zero.
 DUP1
 ISZERO
-PUSH1 0xcf
+PUSH1 0xd0
 JUMPI
 /// Stack: x
 
@@ -173,20 +173,22 @@ SHR
 /// Stack: result, x
 
 /// If x is not a perfect square, round the result toward zero.
-// roundedResult = x / result
+// rounded = x / result
 DUP1
 SWAP2
 DIV
-// if (!(roundedResult < result))
+// result = min(result, rounded)
 DUP2
-DUP2
-LT
-PUSH1 0xcf
-JUMPI
-    // roundedResult = result
-    SWAP1
+SUB
+DUP1
+PUSH0
+SLT
+MUL
+// result -= (0 < result - rounded) * (result - rounded)
+SWAP1
+SUB
 
-// return roundedResult
+// return result
 JUMPDEST
 PUSH0
 MSTORE

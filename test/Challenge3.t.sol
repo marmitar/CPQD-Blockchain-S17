@@ -44,7 +44,7 @@ contract Challenge3Test is Assembler, Test {
     function iSqrt(uint256 x) private noGasMetering returns (uint256 root) {
         root = run(GAS_LIMIT, SQRT, abi.encode(x)).asUint256();
         uint256 gasUsed = lastCallGas.gasTotalUsed;
-        assertLe(ESTIMATOR.gasDiff(x, gasUsed), 2, "gasDiff");
+        assertEq(ESTIMATOR.gasDiff(x, gasUsed), 0, "gasDiff");
     }
 
     /**
@@ -66,7 +66,7 @@ contract Challenge3Test is Assembler, Test {
         assertEq(iSqrt(10), 3, "sqrt(10)");
         assertGasUsed(GAS_LIMIT, 387);
         assertEq(iSqrt(99), 9, "sqrt(99)");
-        assertGasUsed(GAS_LIMIT, 402);
+        assertGasUsed(GAS_LIMIT, 405);
         assertEq(iSqrt(100), 10, "sqrt(100)");
         assertGasUsed(GAS_LIMIT, 405);
         assertEq(iSqrt(101), 10, "sqrt(101)");
@@ -78,11 +78,11 @@ contract Challenge3Test is Assembler, Test {
      */
     function test_SqrtPowersOfTwo() external {
         assertEq(iSqrt(2 ** 2 - 1), 2 ** 1 - 1, "sqrt(2**2-1)");
-        assertGasUsed(GAS_LIMIT, 378);
+        assertGasUsed(GAS_LIMIT, 381);
         assertEq(iSqrt(2 ** 2), 2 ** 1, "sqrt(2**2)");
         assertGasUsed(GAS_LIMIT, 387);
         assertEq(iSqrt(2 ** 4 - 1), 2 ** 2 - 1, "sqrt(2**4-1)");
-        assertGasUsed(GAS_LIMIT, 384);
+        assertGasUsed(GAS_LIMIT, 387);
         assertEq(iSqrt(2 ** 4), 2 ** 2, "sqrt(2**4)");
         assertGasUsed(GAS_LIMIT, 399);
         assertEq(iSqrt(2 ** 8 - 1), 2 ** 4 - 1, "sqrt(2**8-1)");
@@ -90,7 +90,7 @@ contract Challenge3Test is Assembler, Test {
         assertEq(iSqrt(2 ** 8), 2 ** 4, "sqrt(2**8)");
         assertGasUsed(GAS_LIMIT, 399);
         assertEq(iSqrt(2 ** 16 - 1), 2 ** 8 - 1, "sqrt(2**16-1)");
-        assertGasUsed(GAS_LIMIT, 420);
+        assertGasUsed(GAS_LIMIT, 423);
         assertEq(iSqrt(2 ** 16), 2 ** 8, "sqrt(2**16)");
         assertGasUsed(GAS_LIMIT, 399);
         assertEq(iSqrt(2 ** 32 - 1), 2 ** 16 - 1, "sqrt(2**32-1)");
@@ -98,7 +98,7 @@ contract Challenge3Test is Assembler, Test {
         assertEq(iSqrt(2 ** 32), 2 ** 16, "sqrt(2**32)");
         assertGasUsed(GAS_LIMIT, 399);
         assertEq(iSqrt(2 ** 64 - 1), 2 ** 32 - 1, "sqrt(2**64-1)");
-        assertGasUsed(GAS_LIMIT, 456);
+        assertGasUsed(GAS_LIMIT, 459);
         assertEq(iSqrt(2 ** 64), 2 ** 32, "sqrt(2**64)");
         assertGasUsed(GAS_LIMIT, 399);
         assertEq(iSqrt(2 ** 128 - 1), 2 ** 64 - 1, "sqrt(2**128-1)");
@@ -106,7 +106,7 @@ contract Challenge3Test is Assembler, Test {
         assertEq(iSqrt(2 ** 128), 2 ** 64, "sqrt(2**128)");
         assertGasUsed(GAS_LIMIT, 399);
         assertEq(iSqrt(2 ** 256 - 1), 2 ** 128 - 1, "sqrt(2**256-1)");
-        assertGasUsed(GAS_LIMIT, 492);
+        assertGasUsed(GAS_LIMIT, 495);
     }
 
     /**

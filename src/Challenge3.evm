@@ -180,20 +180,22 @@ shr
 ## Stack: result, x
 
 ## If x is not a perfect square, round the result toward zero.
-# roundedResult = x / result
+# rounded = x / result
 dup1
 swap2
 div
-# if (!(roundedResult < result))
+# result = min(result, rounded)
 dup2
-dup2
-lt
-push1 done
-jumpi
-    # roundedResult = result
-    swap1
+sub
+dup1
+push0
+slt
+mul
+# result -= (0 < result - rounded) * (result - rounded)
+swap1
+sub
 
-# return roundedResult
+# return result
 done:
 jumpdest
 push0

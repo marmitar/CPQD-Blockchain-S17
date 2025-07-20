@@ -31,9 +31,7 @@ contract SqrtGasUsage is Script {
     /** @notice Gas used for one iteration of the unrolled loop for Newton-Raphson's method. */
     uint256 private constant NEWTON_STEP = 5 * 3e18 + 5e18;
     /** @notice Gas used for finalization of Newton-Raphson's method. */
-    uint256 private constant NEWTON_FIN = 6 * 3e18 + 5e18 + 10e18;
-    /** @notice Gas used for rouding the output of Newton-Raphson's method. */
-    uint256 private constant NEWTON_ROUNDING = 3e18;
+    uint256 private constant NEWTON_FIN = 8 * 3e18 + 2e18 + 2 * 5e18;
     /** @notice Gas used for the last instructions of {SQRT}. */
     uint256 private constant RETURN = 1e18 + 3e18 + 6e18 + 2 * 2e18;
     // forgefmt: disable-end
@@ -50,10 +48,6 @@ contract SqrtGasUsage is Script {
          * @notice Probability for each group of bits that trigger each branch in `log2(x)`.
          */
         UD60x18[7] bitSets;
-        /**
-         * @notice Probability that `result >= roundedResult` is taken. Hard to predict.
-         */
-        UD60x18 needsRounding;
     }
 
     /**
@@ -68,7 +62,6 @@ contract SqrtGasUsage is Script {
         }
 
         gasNonZero = gasNonZero + ud(7e18) * ud(NEWTON_STEP) + ud(NEWTON_FIN);
-        gasNonZero = gasNonZero + input.needsRounding * ud(NEWTON_ROUNDING);
 
         return ud(HEADER) + input.notZero * gasNonZero + ud(RETURN);
     }
@@ -91,9 +84,8 @@ contract SqrtGasUsage is Script {
 
         return InputDistribution({
             notZero: UNIT - pZero,
-            bitSets: [pBitSet, pBitSet, pBitSet, pBitSet, pBitSet, pBitSet, pBitSet],
-            needsRounding: UNIT// estimated with {sampleProbabilityNeedsRounding}
-         });
+            bitSets: [pBitSet, pBitSet, pBitSet, pBitSet, pBitSet, pBitSet, pBitSet]
+        });
     }
 
     /**
@@ -123,7 +115,6 @@ contract SqrtGasUsage is Script {
         for (uint8 i = 1; i < 7; i++) {
             variance = variance + combinedVariance(pNotZero, dist.bitSets[i]) * ud(SHIFT_TAKEN).powu(2);
         }
-        variance = variance + combinedVariance(pNotZero, dist.needsRounding) * ud(NEWTON_ROUNDING).powu(2);
     }
 
     /**
@@ -183,8 +174,7 @@ contract SqrtGasUsage is Script {
 
         return InputDistribution({
             notZero: d(x != 0),
-            bitSets: [d(bs[0]), d(bs[1]), d(bs[2]), d(bs[3]), d(bs[4]), d(bs[5]), d(bs[6])],
-            needsRounding: HALF_UNIT
+            bitSets: [d(bs[0]), d(bs[1]), d(bs[2]), d(bs[3]), d(bs[4]), d(bs[5]), d(bs[6])]
         });
     }
 
