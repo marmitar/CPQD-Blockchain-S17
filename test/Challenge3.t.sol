@@ -29,7 +29,7 @@ contract Challenge3Test is Assembler, Test {
     /**
      * @notice Maximum gas used by {SQRT}.
      */
-    uint16 private constant GAS_LIMIT = 397;
+    uint16 private constant GAS_LIMIT = 376;
 
     /**
      * @notice Calculates the square root of `x`, returning its integer part.

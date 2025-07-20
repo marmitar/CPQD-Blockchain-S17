@@ -1,106 +1,100 @@
 ## @title Integer Square Root.
 ## @author Tiago de Paula <tiagodepalves@gmail.com>
 ## @notice Calculate the integer square root $0 \leq n < 2^{256}$.
-## @dev Gas usage: 397 gas required, uses 397 gas maximum.
+## @dev Gas usage: 376 gas required, uses 376 gas maximum.
 ## @dev Based on <https://github.com/PaulRBerg/prb-math/blob/v4.1.0/src/Common.sol#L587-L675>.
 
 push0
 calldataload
-## Stack: x
+push1 1
+## Stack: 1, x
 
 ## Find the most significant bit, which doubles as `log2(x)`.
-## if (x >= 2**128)
+## if x >= 2**128:
 push16 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-dup2
+dup3
 gt
-# msb += 128
+# msb7 = (x >= 2**128) ? 128 : 0
 push1 7
 shl
-# x >>= 128
-dup2
+# x >>= msb7
+dup3
 dup2
 shr
-## if (x >= 2**64)
+## if x >= 2**64:
 push8 0xFFFFFFFFFFFFFFFF
 dup2
 gt
-# msb += 64
+# msb6 = (x >= 2**64) ? 64 : 0
 push1 6
 shl
-dup1
-swap3
-or
-# x >>= 64
-swap2
+# x >>= msb6
+swap1
+dup2
 shr
-## if (x >= 2**32)
+## if x >= 2**32:
 push4 0xFFFFFFFF
 dup2
 gt
-# msb += 32
+# msb5 = (x >= 2**32) ? 32 : 0
 push1 5
 shl
-dup1
-swap3
-or
-# x >>= 32
-swap2
+# x >>= msb5
+swap1
+dup2
 shr
-## if (x >= 2**16)
+## if x >= 2**16:
 push2 0xFFFF
 dup2
 gt
-# msb += 16
+# msb4 = (x >= 2**16) ? 16 : 0
 push1 4
 shl
-dup1
-swap3
-or
-# x >>= 16
-swap2
+# x >>= msb4
+swap1
+dup2
 shr
-## if (x >= 2**8)
+## if x >= 2**8:
 push1 0xFF
 dup2
 gt
-# msb += 8
+# msb3 = (x >= 2**8) ? 8 : 0
 push1 3
 shl
-dup1
-swap3
-or
-# x >>= 8
-swap2
+# x >>= msb3
+swap1
+dup2
 shr
-## if (x >= 2**4)
+## if x >= 2**4:
 push1 0x0F
 dup2
 gt
-# msb += 4
+# msb2 = (x >= 2**4) ? 4 : 0
 push1 2
 shl
-dup1
-swap3
-or
-# x >>= 4
-swap2
+# x >>= msb2
+swap1
+dup2
 shr
-## if (x >= 2**2)
+## if x >= 2**2:
 push1 0x04
 lt
-# msb += 2
+# msb1 = (x >= 2**2) ? 2 : 0
 push1 1
 shl
-swap1
+# msb = msb1 | msb2 | msb3 | msb4 | msb5 | msb6 | msb7
 or
-## Stack: msb, x
+or
+or
+or
+or
+or
+## Stack: msb, 1, x
 
 ## Get the closest power of two: $x_0 = 2^{\lfloor \log_2(x) / 2 \rfloor}$.
 ## This will be our initial guess for Newton's method, which has at least one bit correct.
 push1 1
 shr
-push1 1
-swap1
 shl
 ## Stack: result, x
 
