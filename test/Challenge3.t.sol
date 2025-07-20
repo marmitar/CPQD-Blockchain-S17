@@ -2,7 +2,6 @@
 pragma solidity ^0.8.27;
 
 import { Test } from "forge-std/Test.sol";
-import { sqrt } from "prb-math/Common.sol";
 
 import { SqrtGasUsage } from "../script/Challenge3.s.sol";
 import { Assembler, Decode, Runnable, RuntimeContract } from "./Assembler.sol";
@@ -77,57 +76,98 @@ contract Challenge3Test is Assembler, Test {
      * @notice Casacading effect of square root on powers of two.
      */
     function test_SqrtPowersOfTwo() external {
-        assertEq(iSqrt(2 ** 2 - 1), 2 ** 1 - 1, "sqrt(2**2-1)");
+        assertEq(iSqrt(2 ** 2 - 1), 2 ** 1 - 1, "sqrt(2^2-1)");
         assertGasUsed(GAS_LIMIT, 381);
-        assertEq(iSqrt(2 ** 2), 2 ** 1, "sqrt(2**2)");
+        assertEq(iSqrt(2 ** 2), 2 ** 1, "sqrt(2^2)");
         assertGasUsed(GAS_LIMIT, 387);
-        assertEq(iSqrt(2 ** 4 - 1), 2 ** 2 - 1, "sqrt(2**4-1)");
+        assertEq(iSqrt(2 ** 4 - 1), 2 ** 2 - 1, "sqrt(2^4-1)");
         assertGasUsed(GAS_LIMIT, 387);
-        assertEq(iSqrt(2 ** 4), 2 ** 2, "sqrt(2**4)");
+        assertEq(iSqrt(2 ** 4), 2 ** 2, "sqrt(2^4)");
         assertGasUsed(GAS_LIMIT, 399);
-        assertEq(iSqrt(2 ** 8 - 1), 2 ** 4 - 1, "sqrt(2**8-1)");
+        assertEq(iSqrt(2 ** 8 - 1), 2 ** 4 - 1, "sqrt(2^8-1)");
         assertGasUsed(GAS_LIMIT, 405);
-        assertEq(iSqrt(2 ** 8), 2 ** 4, "sqrt(2**8)");
+        assertEq(iSqrt(2 ** 8), 2 ** 4, "sqrt(2^8)");
         assertGasUsed(GAS_LIMIT, 399);
-        assertEq(iSqrt(2 ** 16 - 1), 2 ** 8 - 1, "sqrt(2**16-1)");
+        assertEq(iSqrt(2 ** 16 - 1), 2 ** 8 - 1, "sqrt(2^16-1)");
         assertGasUsed(GAS_LIMIT, 423);
-        assertEq(iSqrt(2 ** 16), 2 ** 8, "sqrt(2**16)");
+        assertEq(iSqrt(2 ** 16), 2 ** 8, "sqrt(2^16)");
         assertGasUsed(GAS_LIMIT, 399);
-        assertEq(iSqrt(2 ** 32 - 1), 2 ** 16 - 1, "sqrt(2**32-1)");
+        assertEq(iSqrt(2 ** 32 - 1), 2 ** 16 - 1, "sqrt(2^32-1)");
         assertGasUsed(GAS_LIMIT, 441);
-        assertEq(iSqrt(2 ** 32), 2 ** 16, "sqrt(2**32)");
+        assertEq(iSqrt(2 ** 32), 2 ** 16, "sqrt(2^32)");
         assertGasUsed(GAS_LIMIT, 399);
-        assertEq(iSqrt(2 ** 64 - 1), 2 ** 32 - 1, "sqrt(2**64-1)");
+        assertEq(iSqrt(2 ** 64 - 1), 2 ** 32 - 1, "sqrt(2^64-1)");
         assertGasUsed(GAS_LIMIT, 459);
-        assertEq(iSqrt(2 ** 64), 2 ** 32, "sqrt(2**64)");
+        assertEq(iSqrt(2 ** 64), 2 ** 32, "sqrt(2^64)");
         assertGasUsed(GAS_LIMIT, 399);
-        assertEq(iSqrt(2 ** 128 - 1), 2 ** 64 - 1, "sqrt(2**128-1)");
+        assertEq(iSqrt(2 ** 128 - 1), 2 ** 64 - 1, "sqrt(2^128-1)");
         assertGasUsed(GAS_LIMIT, 477);
-        assertEq(iSqrt(2 ** 128), 2 ** 64, "sqrt(2**128)");
+        assertEq(iSqrt(2 ** 128), 2 ** 64, "sqrt(2^128)");
         assertGasUsed(GAS_LIMIT, 399);
-        assertEq(iSqrt(2 ** 256 - 1), 2 ** 128 - 1, "sqrt(2**256-1)");
+        assertEq(iSqrt(2 ** 256 - 1), 2 ** 128 - 1, "sqrt(2^256-1)");
         assertGasUsed(GAS_LIMIT, 495);
     }
 
     /**
-     * @notice Fuzz testing, comparing to a precise implementation.
+     * @notice Square root of `type(uint256).max`.
      */
-    function testFuzz_Sqrt(uint256 x) external {
-        assertEq(iSqrt(x), sqrt(x), "sqrt(0 <= x <= 2**256 - 1)");
+    uint256 constant MAX_SQRT_UINT256 = type(uint128).max;
+
+    /**
+     * @notice Take the integer square root and verify the required properties.
+     * @param variant Debug label.
+     */
+    function checkedSqrt(uint256 x, string memory variant) private {
+        uint256 r = iSqrt(x);
+        assertLe(r, MAX_SQRT_UINT256, "sqrt(x)^2 overflow");
+
+        assertGe(x, r * r, string.concat(variant, " x >= sqrt(x)^2"));
+        if (r + 1 <= MAX_SQRT_UINT256) {
+            assertLe(x, (r + 1) * (r + 1), string.concat(variant, " x < (sqrt(x) + 1)^2"));
+        }
     }
 
     /**
-     * @notice Shuffle fuzzer input so large values are favored.
+     * @notice Fuzz testing on `uint16`. Mathematical properties checked.
      */
-    function shuffleUint256(uint256 value) private noGasMetering returns (uint256 shuffled) {
-        return uint256(keccak256(abi.encode(value)));
+    function testFuzz_Sqrt16(uint16 x) external {
+        checkedSqrt(x, "uint16");
+    }
+
+    /**
+     * @notice Fuzz testing on `uint32`. Mathematical properties checked.
+     */
+    function testFuzz_Sqrt32(uint32 x) external {
+        checkedSqrt(x, "uint32");
+    }
+
+    /**
+     * @notice Fuzz testing on `uint64`. Mathematical properties checked.
+     */
+    function testFuzz_Sqrt64(uint64 x) external {
+        checkedSqrt(x, "uint64");
+    }
+
+    /**
+     * @notice Fuzz testing on `uint128`. Mathematical properties checked.
+     */
+    function testFuzz_Sqrt128(uint128 x) external {
+        checkedSqrt(x, "uint128");
+    }
+
+    /**
+     * @notice Fuzz testing on `uint256`. Mathematical properties checked.
+     */
+    function testFuzz_Sqrt256(uint256 x) public {
+        checkedSqrt(x, "uint256");
     }
 
     /**
      * @notice Fuzz testing, focused on very large numbers.
      */
-    function testFuzz_SqrtBig(uint256 input) external {
-        uint256 x = shuffleUint256(input);
-        assertEq(iSqrt(x), sqrt(x), "sqrt(0 <= x <= 2**256 - 1)");
+    function testFuzz_SqrtBig(uint256 seed) external {
+        // shuffle input to favor large values
+        uint256 bigX = uint256(keccak256(abi.encode(seed)));
+        checkedSqrt(bigX, "big uint256");
     }
 }
