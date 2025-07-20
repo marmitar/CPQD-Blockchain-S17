@@ -31,7 +31,7 @@ contract SqrtGasUsage is Script {
     /** @notice Gas used for one iteration of the unrolled loop for Newton-Raphson's method. */
     uint256 private constant NEWTON_STEP = 5 * 3e18 + 5e18;
     /** @notice Gas used for finalization of Newton-Raphson's method. */
-    uint256 private constant NEWTON_FIN = 6 * 3e18 + 5e18 + 10e18 + 1e18 + 2e18;
+    uint256 private constant NEWTON_FIN = 6 * 3e18 + 5e18 + 10e18;
     /** @notice Gas used for rouding the output of Newton-Raphson's method. */
     uint256 private constant NEWTON_ROUNDING = 3e18;
     /** @notice Gas used for the last instructions of {SQRT}. */
@@ -92,7 +92,7 @@ contract SqrtGasUsage is Script {
         return InputDistribution({
             notZero: UNIT - pZero,
             bitSets: [pBitSet, pBitSet, pBitSet, pBitSet, pBitSet, pBitSet, pBitSet],
-            needsRounding: HALF_UNIT // estimated with {sampleProbabilityNeedsRounding}
+            needsRounding: UNIT// estimated with {sampleProbabilityNeedsRounding}
          });
     }
 

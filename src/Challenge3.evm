@@ -184,19 +184,16 @@ shr
 dup1
 swap2
 div
-# if (result >= roundedResult)
-dup1
-dup3
+# if (!(roundedResult < result))
+dup2
+dup2
 lt
-push1 keep
+push1 done
 jumpi
-    # result = roundedResult
+    # roundedResult = result
     swap1
-keep:
-    jumpdest
-pop
 
-# return result
+# return roundedResult
 done:
 jumpdest
 push0

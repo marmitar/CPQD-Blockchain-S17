@@ -9,7 +9,7 @@ CALLDATALOAD
 /// Special case for 0, to avoid division by zero.
 DUP1
 ISZERO
-PUSH1 0xd1
+PUSH1 0xcf
 JUMPI
 /// Stack: x
 
@@ -177,18 +177,16 @@ SHR
 DUP1
 SWAP2
 DIV
-// if (result >= roundedResult)
-DUP1
-DUP3
+// if (!(roundedResult < result))
+DUP2
+DUP2
 LT
 PUSH1 0xcf
 JUMPI
-    // result = roundedResult
+    // roundedResult = result
     SWAP1
-JUMPDEST
-POP
 
-// return result
+// return roundedResult
 JUMPDEST
 PUSH0
 MSTORE
