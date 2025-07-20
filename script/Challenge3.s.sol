@@ -31,7 +31,7 @@ contract SqrtGasUsage is Script {
     /** @notice Gas used for one iteration of the unrolled loop for Newton-Raphson's method. */
     uint256 private constant NEWTON_STEP = 5 * 3e18 + 5e18;
     /** @notice Gas used for finalization of Newton-Raphson's method. */
-    uint256 private constant NEWTON_FIN = 8 * 3e18 + 2e18 + 2 * 5e18;
+    uint256 private constant NEWTON_FIN = 4 * 3e18;
     /** @notice Gas used for the last instructions of {SQRT}. */
     uint256 private constant RETURN = 1e18 + 3e18 + 6e18 + 2 * 2e18;
     // forgefmt: disable-end
@@ -61,7 +61,7 @@ contract SqrtGasUsage is Script {
             gasNonZero = gasNonZero + ud(SHIFT_CMP) + input.bitSets[i] * ud(SHIFT_TAKEN);
         }
 
-        gasNonZero = gasNonZero + ud(7e18) * ud(NEWTON_STEP) + ud(NEWTON_FIN);
+        gasNonZero = gasNonZero + ud(8e18) * ud(NEWTON_STEP) + ud(NEWTON_FIN);
 
         return ud(HEADER) + input.notZero * gasNonZero + ud(RETURN);
     }
@@ -209,15 +209,6 @@ contract SqrtGasUsage is Script {
     }
 
     /**
-     * @notice Check if `x` takes the `if (result >= roundedResult)` branch in {SQRT}.
-     */
-    function valueNeedsRounding(uint256 x) private view returns (bool rounded) {
-        UD60x18 expected = estimatedGasUsageFor(inputDistributionOf(x));
-        UD60x18 used = convert(measure(x));
-        return used > expected;
-    }
-
-    /**
      * @notice Generates evenly distributed values using a seed and an index.
      */
     function prngKeccak256(uint256 seed, uint256 index) private pure returns (uint256 random) {
@@ -225,25 +216,6 @@ contract SqrtGasUsage is Script {
             // wrapping math
             return uint256(keccak256(abi.encode(seed, index)));
         }
-    }
-
-    /**
-     * @notice Sample gas usage for 10 thousand values of `x` and estimate the probability of taking the
-     * `if (result >= roundedResult)` branch.
-     */
-    function sampleProbabilityNeedsRounding() private view returns (UD60x18 probability) {
-        uint256 seed = 0x3f3e4beb4a8ac613088d7f25bc8cd8d6c5bdde2546e99b730c1f3605dea4f2e9;
-
-        uint32 total = 10_000;
-        uint32 rounded = 0;
-        for (uint16 i = 0; i < total; i++) {
-            uint256 x = prngKeccak256(seed, i);
-            if (valueNeedsRounding(x)) {
-                rounded += 1;
-            }
-        }
-
-        return convert(rounded * 100) / convert(total);
     }
 
     /**
@@ -273,11 +245,10 @@ contract SqrtGasUsage is Script {
     /**
      * @notice Estimate the distribution of gas usage for {SQRT}.
      */
-    function run() external view returns (string memory mean, string memory stdDev, string memory needsRounding) {
+    function run() external view returns (string memory mean, string memory stdDev) {
         testPerfectSquares(1000);
 
         mean = toString(gasAverage());
         stdDev = toString(gasStdDev());
-        needsRounding = toString(sampleProbabilityNeedsRounding());
     }
 }

@@ -9,7 +9,7 @@ CALLDATALOAD
 /// Special case for 0, to avoid division by zero.
 DUP1
 ISZERO
-PUSH1 0xd0
+PUSH1 0xd1
 JUMPI
 /// Stack: x
 
@@ -172,21 +172,21 @@ PUSH1 0x01
 SHR
 /// Stack: result, x
 
-/// If x is not a perfect square, round the result toward zero.
-// rounded = x / result
+/// We do an extra iteration to validate convergence. This is only really required for almost perfect squares.
+// 8: nextResult = (result + x / result) >> 1
 DUP1
 SWAP2
 DIV
-// result = min(result, rounded)
 DUP2
-SUB
-DUP1
-PUSH0
-SLT
-MUL
-// result -= (0 < result - rounded) * (result - rounded)
-SWAP1
-SUB
+ADD
+PUSH1 0x01
+SHR
+/// The mean of the last two iteration will give the correct value, even if in a `⌊√x⌋` => `⌊√x⌋ + 1` cycle.
+// result = (result + nextResult) >> 1
+ADD
+PUSH1 0x01
+SHR
+/// Stack: result
 
 // return result
 JUMPDEST

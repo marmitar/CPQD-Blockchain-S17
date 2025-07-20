@@ -179,21 +179,21 @@ push1 0x01
 shr
 ## Stack: result, x
 
-## If x is not a perfect square, round the result toward zero.
-# rounded = x / result
+## We do an extra iteration to validate convergence. This is only really required for almost perfect squares.
+# 8: nextResult = (result + x / result) >> 1
 dup1
 swap2
 div
-# result = min(result, rounded)
 dup2
-sub
-dup1
-push0
-slt
-mul
-# result -= (0 < result - rounded) * (result - rounded)
-swap1
-sub
+add
+push1 0x01
+shr
+## The mean of the last two iteration will give the correct value, even if in a `⌊√x⌋` => `⌊√x⌋ + 1` cycle.
+# result = (result + nextResult) >> 1
+add
+push1 0x01
+shr
+## Stack: result
 
 # return result
 done:
