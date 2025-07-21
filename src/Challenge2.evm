@@ -1,26 +1,27 @@
 ## @title Circle Area.
 ## @author Tiago de Paula <tiagodepalves@gmail.com>
-## @notice Calculate the integer approximation for area the of a circle of radius $0 \leq r < 2^{16}$.
+## @notice Calculate the integer approximation for area the of a circle of radius [0, 65_535].
 ## @notice Gas usage: exactly 48 gas is used.
 
 # Q: denominator of the chosen π approximation
-push28 0x0d8656913b7b544056da0cfaaf6439d8e836a4efca1917f26d1ee493
+push28 0x517cc1b71c3a5ba1556b0bd08a4ba0b4170db1198f6a24e9d36ffaac
 # Q/2
-push28 0x06c32b489dbdaa202b6d067d57b21cec741b5277e50c8bf9368f7249
+push28 0x28be60db8e1d2dd0aab585e84525d05a0b86d88cc7b51274e9b7fd56
 # P: numerator of the π fraction
-push28 0x2a7d419042d27fb662d1be44f5b2fcccc28452d3feda50d76f29ab89
+push28 0xffffffffddbdaafcf520c2a336649a78c8758a48aa801b09f3770572
+## Here P/Q ≈ π. The values were selected so that `area(65_535 + 1)` overflows.
 
 push0
 calldataload
-# calculate $r^2$
+# calculate: r²
 dup1
 mul
-# do: $(P \times r^2 + Q/2) / Q$, where $P/Q \approx \pi$
+# do: A = (P × r² + Q/2) / Q
 mul
 add
 div
 
-# return
+# return: A
 push0
 mstore
 push1 0x20

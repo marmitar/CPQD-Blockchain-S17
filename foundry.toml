@@ -8,6 +8,7 @@ libs = ['lib']
 fs_permissions = [{ access = "read", path = "src/"}, { access = "read", path = "dist/"}]
 ffi = true
 no_match_coverage = "script"
+gas_limit = "18446744073709551615"
 # for deploy
 optimizer = true
 optimizer-runs = 20_000

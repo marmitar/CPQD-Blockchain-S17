@@ -71,13 +71,14 @@ contract Challenge2Test is Assembler, Test {
     /**
      * @notice Radius must be between 0 and this value.
      */
-    uint16 private MAX_RADIUS = 65_535;
+    uint16 private constant MAX_RADIUS = 65_535;
 
     /**
-     * @notice Guarantee that even the largest input radius can't overflow.
+     * @notice Guarantee that even the largest input radius can't overflow, but one more than it does.
      */
     function test_CircleAreaNoOverflow() external {
         assertEq(circleArea(MAX_RADIUS), 13_492_625_933, "r = MAX_RADIUS");
+        assertEq(circleArea(uint256(MAX_RADIUS) + 1), 0, "r = MAX_RADIUS+1 overflows");
     }
 
     /**
@@ -85,5 +86,14 @@ contract Challenge2Test is Assembler, Test {
      */
     function testFuzz_CircleArea(uint16 radius) external {
         assertEq(circleArea(radius), expectedCircleArea(radius), "0 <= r <= MAX_RADIUS");
+    }
+
+    /**
+     * @notice Ensure radius over teh maximum gives garbage responses.
+     */
+    function testFuzz_CircleAreaOverflowsAfterMaxRadius(uint16 overRadius) external {
+        uint256 radius = uint256(MAX_RADIUS) + 1 + uint256(overRadius);
+        string memory message = string.concat("r = ", vm.toString(radius), " overflows");
+        assertNotEq(circleArea(radius), expectedCircleArea(radius), message);
     }
 }
