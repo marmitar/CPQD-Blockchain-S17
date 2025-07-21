@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.27;
 
-import { Test, Vm } from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 import { Assembler, Decode, Runnable, RuntimeContract } from "./Assembler.sol";
 
@@ -32,7 +32,7 @@ contract Challenge4Test is Assembler, Test {
     uint256 private constant LIMIT = 8 + 30 + 22;
 
     /**
-     * @notice Precise implementation using `prb-math`.
+     * @notice Run burner with the given `gas` limit and check usage.
      */
     function burn(uint256 gas) private noGasMetering {
         run(gas, BURNER, Decode.NULL).asVoid();

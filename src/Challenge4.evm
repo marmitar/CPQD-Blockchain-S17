@@ -1,19 +1,20 @@
 ## @title Burn 100% of your gas today!
 ## @author Tiago de Paula <tiagodepalves@gmail.com>
+## @notice Gas usage: at least 60 gas is used, up to all gas received.
 ## @notice Requires at least `8 + 30 + 22 = 60` gas to work. Anything less than that and the contract will revert.
 
 ## Find an appropriate position and then jump to the normalization table.
 # gas congruence: G+8
-push1 0x16
+push1 22
 # gas congruence: G+5
-push1 0x16
+dup1
 # gas congruence: G+2
 gas
 # gas congruence: G = G+22
 mod
 # gas congruence: G-5 = G+17
 ## Here we need an offset such that `(G+OFFSET) % 22 = (G-30) % 22`
-push1 0x0e
+push1 14
 # gas congruence: G-8 = G+14
 add
 # gas congruence: G-11 = G+11
@@ -75,7 +76,7 @@ burn:
 # gas congruence: 22
 jumpdest
 # gas congruence: 21
-push1 0x10
+push1 16
 # gas congruence: 18
 gas
 # gas congruence: 16

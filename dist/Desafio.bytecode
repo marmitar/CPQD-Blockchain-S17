@@ -1,87 +1,89 @@
 /// @title Burn 100% of your gas today!
 /// @author Tiago de Paula <tiagodepalves@gmail.com>
+/// @notice Gas usage: at least 60 gas is used, up to all gas received.
 /// @notice Requires at least `8 + 30 + 22 = 60` gas to work. Anything less than that and the contract will revert.
 
 /// Find an appropriate position and then jump to the normalization table.
 // gas congruence: G+8
-PUSH1 0x16
+push1 22
 // gas congruence: G+5
-PUSH1 0x16
+dup1
 // gas congruence: G+2
-GAS
+gas
 // gas congruence: G = G+22
-MOD
+mod
 // gas congruence: G-5 = G+17
 /// Here we need an offset such that `(G+OFFSET) % 22 = (G-30) % 22`
-PUSH1 0x0e
+push1 14
 // gas congruence: G-8 = G+14
-ADD
+add
 // gas congruence: G-11 = G+11
-MOD
+mod
 // gas congruence: G-16 = G+6
-PUSH1 0x23
+push1 0x22 // burn
 // gas congruence: G-19 = G+3
-SUB
+sub
 // gas congruence: G-22 = G+0
-JUMP
+jump
 // gas congruence: G-30 = G+14
 
 /// Normalization table that consumes enough gas such that `gas % 22 == 0` at the `burn` loop
 // gas congruence: 21
-JUMPDEST
+jumpdest
 // gas congruence: 20
-JUMPDEST
+jumpdest
 // gas congruence: 19
-JUMPDEST
+jumpdest
 // gas congruence: 18
-JUMPDEST
+jumpdest
 // gas congruence: 17
-JUMPDEST
+jumpdest
 // gas congruence: 16
-JUMPDEST
+jumpdest
 // gas congruence: 15
-JUMPDEST
+jumpdest
 // gas congruence: 14
-JUMPDEST
+jumpdest
 // gas congruence: 13
-JUMPDEST
+jumpdest
 // gas congruence: 12
-JUMPDEST
+jumpdest
 // gas congruence: 11
-JUMPDEST
+jumpdest
 // gas congruence: 10
-JUMPDEST
+jumpdest
 // gas congruence: 9
-JUMPDEST
+jumpdest
 // gas congruence: 8
-JUMPDEST
+jumpdest
 // gas congruence: 7
-JUMPDEST
+jumpdest
 // gas congruence: 6
-JUMPDEST
+jumpdest
 // gas congruence: 5
-JUMPDEST
+jumpdest
 // gas congruence: 4
-JUMPDEST
+jumpdest
 // gas congruence: 3
-JUMPDEST
+jumpdest
 // gas congruence: 2
-JUMPDEST
+jumpdest
 // gas congruence: 1
-JUMPDEST
+jumpdest
 
 /// Should reach here with `gas % 22 == 0`, otherwise this loop will never end and the contract will fail
+// burn:
 // gas congruence: 22
-JUMPDEST
+jumpdest
 // gas congruence: 21
-PUSH1 0x10
+push1 16
 // gas congruence: 18
-GAS
+gas
 // gas congruence: 16
-GT
+gt
 // gas congruence: 13
-PUSH1 0x23
+push1 0x22 // burn
 // gas congruence: 10
-JUMPI
+jumpi
 // gas congruence: 0
-STOP
+stop
