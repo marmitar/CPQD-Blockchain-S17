@@ -32,7 +32,7 @@ function sqrt(uint256 x) pure returns (uint256 root) {
         // SKIPPED: x >> msb1
         // SKIPPED: msb0 = (x >= 2**1) ? 1 : 0
         // msb = msb1 | msb2 | msb3 | msb4 | msb5 | msb6 | msb7
-        let msb := or(msb1, or(msb2, or(msb3, or(msb4, or(msb5, or(msb6, msb7))))))
+        let msb := or(or(or(or(or(or(msb1, msb2), msb3), msb4), msb5), msb6), msb7)
 
         // Get the closest power of two: $x_0 = 2^{\lfloor \log_2(x) / 2 \rfloor}$.
         // This will be our initial guess for Newton's method, which has at least one bit correct.
