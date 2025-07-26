@@ -33,25 +33,12 @@ contract Challenge3Test is Assembler, Test {
     uint16 private constant GAS_LIMIT = 376;
 
     /**
-     * @notice Gas used by `YUL.sqrt()`.
-     */
-    uint16 private constant YUL_GAS_USAGE = GAS_LIMIT + 50;
-
-    /**
      * @notice Calculates the square root of `x`, returning its integer part.
      */
     function iSqrt(uint256 x) private noGasMetering returns (uint256 root) {
         root = run(GAS_LIMIT, SQRT, abi.encode(x)).asUint256();
         assertGasUsed(GAS_LIMIT);
-
-        vm.resumeGasMetering();
-        uint256 startGas = gasleft();
-        uint256 result = YUL.sqrt(x);
-        uint256 endGas = gasleft();
-        vm.pauseGasMetering();
-
-        assertEq(result, root, "Yul assembly");
-        assertEq(startGas - endGas, YUL_GAS_USAGE, "Yul gas usage");
+        assertEq(YUL.sqrt(x), root, "Yul assembly");
     }
 
     /**

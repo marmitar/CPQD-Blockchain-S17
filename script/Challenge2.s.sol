@@ -100,7 +100,10 @@ contract CircleArea {
      * @notice Calculate the integer approximation for area the of a circle of radius `r`.
      * @param r Radius in range [0, 65_535]. A larger input will result in overflow.
      */
-    function run(uint256 r) external pure returns (uint256 area) {
-        return YUL.circleArea(r);
+    function run(uint256 r) external view returns (uint256 area) {
+        uint256 startGas = gasleft();
+        area = YUL.circleArea(r);
+        uint256 endGas = gasleft();
+        console.log("Gas used: %d", startGas - endGas - 2);
     }
 }
