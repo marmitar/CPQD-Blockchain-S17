@@ -39,7 +39,6 @@ library Runnable {
      * Gas usage is mesured and returned.
      * @dev Sadly, this must be implemented outside {Assembler}, in new "contract" (or library, in this case).
      */
-    /// forge-config: default.optimizer-runs = 2000000
     function staticCall(RuntimeContract runtime, uint256 gasLimit, Vm vm, bytes memory input)
         external
         view
@@ -52,7 +51,7 @@ library Runnable {
             return (result, vm.lastCallGas());
         } else if (result.length > 0) {
             // custom error
-            assembly {
+            assembly ("memory-safe") {
                 revert(add(result, 0x20), mload(result))
             }
         } else {
@@ -190,10 +189,9 @@ abstract contract Assembler is TestBase, StdCheats {
      * @notice Executes the {RuntimeContract} and verify successful exection. Input and output unaltered.
      * @dev Gas usage is mesured and stored in {lastCallGas}.
      */
-    /// forge-config: default.optimizer-runs = 2000000
     function run(uint256 gasLimit, RuntimeContract runtime, bytes memory input)
         internal
-        noGasMetering
+        noGasMetering // ensure StdCheats is correct after this call
         returns (bytes memory output)
     {
         vm.resumeGasMetering();

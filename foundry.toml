@@ -11,7 +11,7 @@ no_match_coverage = "script"
 gas_limit = "18446744073709551615"
 # for deploy
 optimizer = true
-optimizer-runs = 20_000
+optimizer-runs = 2_000_000
 extra-output-files = [
   'metadata',
   'ir',

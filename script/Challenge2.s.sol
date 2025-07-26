@@ -34,6 +34,7 @@ contract PiFractionScript is Script {
      * @notice Area of a circle of radius `r` assuming `p / q` is a good approximation of π.
      */
     function circleArea(uint256 p, uint256 q, uint256 r) private pure returns (uint256 area) {
+        // SAFETY: overflow and division by zero allowed
         unchecked {
             return ((p * r * r) + (q / 2)) / q;
         }
