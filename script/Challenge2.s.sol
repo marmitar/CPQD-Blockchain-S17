@@ -4,6 +4,8 @@ pragma solidity ^0.8.27;
 import { Script, console } from "forge-std/Script.sol";
 import { mulDiv } from "prb-math/Common.sol";
 
+import "../src/Challenge2.sol" as YUL;
+
 /**
  * @title Calculate approximate fractions of π.
  * @author Tiago de Paula <tiagodepalves@gmail.com>
@@ -84,5 +86,21 @@ contract PiFractionScript is Script {
         require(circleArea(p, q, MAX_R) == 13_492_625_933, "area(MAX_R) is wrong");
         require(circleArea(p, q, uint256(MAX_R) + 1) < 13_492_625_933, "area(MAX_R+1) does not overflow");
         return (bytes32(p), bytes32(q), bytes32(q / 2));
+    }
+}
+
+/**
+ * @title Circle Area.
+ * @author Tiago de Paula <tiagodepalves@gmail.com>
+ * @notice Calculate the integer approximation for area the of a circle of radius [0, 65_535].
+ * @dev Run with `forge script script/Challenge2.s.sol:CircleArea --sig 'run(uint256)' RADIUS`.
+ */
+contract CircleArea {
+    /**
+     * @notice Calculate the integer approximation for area the of a circle of radius `r`.
+     * @param r Radius in range [0, 65_535]. A larger input will result in overflow.
+     */
+    function run(uint256 r) external pure returns (uint256 area) {
+        return YUL.circleArea(r);
     }
 }

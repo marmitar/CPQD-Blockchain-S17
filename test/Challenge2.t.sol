@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import { Test } from "forge-std/Test.sol";
 import { PI, UD60x18, convert, ud } from "prb-math/UD60x18.sol";
 
+import "../src/Challenge2.sol" as YUL;
 import { Assembler, Decode, Runnable, RuntimeContract } from "./Assembler.sol";
 
 using Runnable for RuntimeContract;
@@ -33,11 +34,25 @@ contract Challenge2Test is Assembler, Test {
     uint8 private constant GAS_LIMIT = 48;
 
     /**
+     * @notice Gas used by `YUL.circleArea()`.
+     */
+    uint8 private constant YUL_GAS_USAGE = GAS_LIMIT - 6;
+
+    /**
      * @notice Calculate the area of a circle of the give `radius`, rounded to the nearest integer.
      */
     function circleArea(uint256 radius) private noGasMetering returns (uint256 area) {
         area = run(GAS_LIMIT, CIRCLE_AREA, abi.encode(radius)).asUint256();
         assertGasUsed(GAS_LIMIT, GAS_LIMIT);
+
+        vm.resumeGasMetering();
+        uint256 startGas = gasleft();
+        uint256 result = YUL.circleArea(radius);
+        uint256 endGas = gasleft();
+        vm.pauseGasMetering();
+
+        assertEq(result, area, "Yul assembly");
+        assertEq(startGas - endGas, YUL_GAS_USAGE, "Yul gas usage");
     }
 
     /**
