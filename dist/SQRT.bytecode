@@ -151,20 +151,16 @@ push1 1
 shr
 /// Stack: root, x
 
-/// We do an extra iteration to validate convergence. This is only really required for almost perfect squares.
-// 8: nextRoot = (root + x / root) >> 1
+/// For almost perfect squares, Newton's method cycles between `⌊√x⌋` => `⌊√x⌋ + 1`, so we need to round the result down.
+// if x / root < x:
 dup1
 swap2
 div
 dup2
-add
-push1 1
-shr
-/// The mean of the last two iteration will give the correct value, even if in a `⌊√x⌋` => `⌊√x⌋ + 1` cycle.
-// root = (root + nextRoot) >> 1
-add
-push1 1
-shr
+gt
+// x -= 1
+swap1
+sub
 /// Stack: root
 
 // return root

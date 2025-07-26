@@ -47,9 +47,8 @@ function sqrt(uint256 x) pure returns (uint256 root) {
         root := shr(1, add(root, div(x, root)))
         root := shr(1, add(root, div(x, root)))
         root := shr(1, add(root, div(x, root)))
-        // We do an extra iteration to validate convergence. This is only really required for almost perfect squares.
-        let nextRoot := shr(1, add(root, div(x, root)))
-        // The mean of the last two iteration will give the correct value, even if in a `⌊√x⌋` => `⌊√x⌋ + 1` cycle.
-        root := shr(1, add(root, nextRoot))
+        // For almost perfect squares, Newton's method cycles between `⌊√x⌋` => `⌊√x⌋ + 1`, so we need to
+        // round the result down.
+        root := sub(root, gt(root, div(x, root)))
     }
 }
