@@ -9,7 +9,7 @@ calldataload
 push1 1
 ## Stack: 1, x
 
-## Find the most significant bit, which doubles as `log2(x)`.
+## Find the most significant bit, equivalent to `log2(x)`.
 ## if x >= 2**128:
 push16 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 dup3
@@ -82,6 +82,8 @@ lt
 # msb1 = (x >= 2**2) ? 2 : 0
 dup8
 shl
+# SKIPPED: x >>= msb2
+# SKIPPED: msb0 = (x >= 2**1) ? 1 : 0
 # msb = msb1 | msb2 | msb3 | msb4 | msb5 | msb6 | msb7
 or
 or
@@ -96,63 +98,63 @@ or
 dup2
 shr
 shl
-## Stack: result, x
+## Stack: root, x
 
 ## Now we have 1 bit correct of $\sqrt{x}$. The next 7 iterations of Newton's method will expand it into 256 bits.
 ## Note: division by zero returns 0, so not an issue here.
-# 1: result = (result + x / result) >> 1
+# 1: root = (root + x / root) >> 1
 dup1
 dup3
 div
 add
 push1 1
 shr
-# 2: result = (result + x / result) >> 1
+# 2: root = (root + x / root) >> 1
 dup1
 dup3
 div
 add
 push1 1
 shr
-# 3: result = (result + x / result) >> 1
+# 3: root = (root + x / root) >> 1
 dup1
 dup3
 div
 add
 push1 1
 shr
-# 4: result = (result + x / result) >> 1
+# 4: root = (root + x / root) >> 1
 dup1
 dup3
 div
 add
 push1 1
 shr
-# 5: result = (result + x / result) >> 1
+# 5: root = (root + x / root) >> 1
 dup1
 dup3
 div
 add
 push1 1
 shr
-# 6: result = (result + x / result) >> 1
+# 6: root = (root + x / root) >> 1
 dup1
 dup3
 div
 add
 push1 1
 shr
-# 7: result = (result + x / result) >> 1
+# 7: root = (root + x / root) >> 1
 dup1
 dup3
 div
 add
 push1 1
 shr
-## Stack: result, x
+## Stack: root, x
 
 ## We do an extra iteration to validate convergence. This is only really required for almost perfect squares.
-# 8: nextResult = (result + x / result) >> 1
+# 8: nextRoot = (root + x / root) >> 1
 dup1
 swap2
 div
@@ -161,13 +163,13 @@ add
 push1 1
 shr
 ## The mean of the last two iteration will give the correct value, even if in a `⌊√x⌋` => `⌊√x⌋ + 1` cycle.
-# result = (result + nextResult) >> 1
+# root = (root + nextRoot) >> 1
 add
 push1 1
 shr
-## Stack: result
+## Stack: root
 
-# return result
+# return root
 push0
 mstore
 push1 0x20
