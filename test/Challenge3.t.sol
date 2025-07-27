@@ -4,9 +4,8 @@ pragma solidity ^0.8.27;
 import { Test } from "forge-std/Test.sol";
 
 import "../src/Challenge3.sol" as YUL;
-import { Assembler, Decode, Runnable, RuntimeContract } from "./Assembler.sol";
+import { Assembler, Decode, RuntimeContract } from "./Assembler.sol";
 
-using Runnable for RuntimeContract;
 using Decode for bytes;
 
 /**

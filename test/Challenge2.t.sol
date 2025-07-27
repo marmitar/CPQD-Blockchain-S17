@@ -5,9 +5,8 @@ import { Test } from "forge-std/Test.sol";
 import { PI, UD60x18, convert, ud } from "prb-math/UD60x18.sol";
 
 import "../src/Challenge2.sol" as YUL;
-import { Assembler, Decode, Runnable, RuntimeContract } from "./Assembler.sol";
+import { Assembler, Decode, RuntimeContract } from "./Assembler.sol";
 
-using Runnable for RuntimeContract;
 using Decode for bytes;
 
 /**

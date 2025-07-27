@@ -14,7 +14,7 @@ type RuntimeContract is address;
 /**
  * @dev Based on <https://github.com/Analog-Labs/evm-interpreter/blob/main/src/utils/Executor.sol>.
  */
-using Runnable for RuntimeContract;
+using Runnable for RuntimeContract global;
 
 /**
  * @title Checked executions for {RuntimeContract}.

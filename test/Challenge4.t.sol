@@ -5,7 +5,6 @@ import { Test } from "forge-std/Test.sol";
 
 import { Assembler, Decode, Runnable, RuntimeContract } from "./Assembler.sol";
 
-using Runnable for RuntimeContract;
 using Decode for bytes;
 
 /**
