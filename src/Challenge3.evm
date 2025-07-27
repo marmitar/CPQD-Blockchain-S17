@@ -10,42 +10,39 @@ calldataload
 push1 1
 # stack: 1 x
 
-## Lookup Table, stack: table 1 x
-push30 0x010102020202030303030303030300000000000000000000000000000000
-
 ## If value has upper 128 bits set, log2 result is at least 128
-dup3
-# stack: x table 1 x
+dup2
+# stack: x 1 x
 push16 0xffffffffffffffffffffffffffffffff
-# stack: 2**128-1 x table 1 x
+# stack: 2**128-1 x 1 x
 lt
-# stack: x>=2**128 table 1 x
+# stack: x>=2**128 1 x
 push1 7
-# stack: 7 x>=2**128 table 1 x
+# stack: 7 x>=2**128 1 x
 shl
-# stack: ±log2(x) table 1 x
+# stack: ±log2(x) 1 x
 
 ## If upper 64 bits of 128-bit half set, add 64 to result
-# stack: log2(x) table 1 x
-dup4
-# stack: x ±log2(x) table 1 x
+# stack: log2(x) 1 x
+dup3
+# stack: x ±log2(x) 1 x
 dup2
-# stack: ±log2(x) x ±log2(x) table 1 x
+# stack: ±log2(x) x ±log2(x) 1 x
 shr
-# stack: x/±log2(x) ±log2(x) table 1 x
+# stack: x/±log2(x) ±log2(x) 1 x
 push8 0xffffffffffffffff
-# stack: 2**64-1 x/±log2(x) ±log2(x) table 1 x
+# stack: 2**64-1 x/±log2(x) ±log2(x) 1 x
 lt
-# stack: (x/2**±log2(x) >= 2**64) ±log2(x) table 1 x
+# stack: (x/2**±log2(x) >= 2**64) ±log2(x) 1 x
 push1 6
-# stack: 6 (x/2**±log2(x) >= 2**64) ±log2(x) table 1 x
+# stack: 6 (x/2**±log2(x) >= 2**64) ±log2(x) 1 x
 shl
-# stack: ±log2(x) ±log2(x) table 1 x
+# stack: ±log2(x) ±log2(x) 1 x
 or
-# stack: ±log2(x) table 1 x
+# stack: ±log2(x) 1 x
 
 ## If upper 32 bits of 64-bit half set, add 32 to result
-dup4
+dup3
 dup2
 shr
 push4 0xffffffff
@@ -55,7 +52,7 @@ shl
 or
 
 ## If upper 16 bits of 32-bit half set, add 16 to result
-dup4
+dup3
 dup2
 shr
 push2 0xffff
@@ -65,7 +62,7 @@ shl
 or
 
 ## If upper 8 bits of 16-bit half set, add 8 to result
-dup4
+dup3
 dup2
 shr
 push1 0xff
@@ -75,7 +72,7 @@ shl
 or
 
 ## If upper 4 bits of 8-bit half set, add 4 to result
-dup4
+dup3
 dup2
 shr
 push1 0x0f
@@ -83,10 +80,10 @@ lt
 push1 2
 shl
 or
-# stack: ±log2(x) table 1 x
+# stack: ±log2(x) 1 x
 
 ## Table lookup
-swap1
+push30 0x010102020202030303030303030300000000000000000000000000000000
 dup4
 # stack: x table ±log2(x) 1 x
 dup3
