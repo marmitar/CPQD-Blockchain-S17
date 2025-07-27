@@ -1,173 +1,178 @@
-## @title Integer Square Root.
-## @author Tiago de Paula <tiagodepalves@gmail.com>
-## @notice Calculate the integer square root $0 \leq n < 2^{256}$.
-## @notice Gas usage: exactly 376 gas is used.
-## @dev Based on <https://github.com/PaulRBerg/prb-math/blob/v4.1.0/src/Common.sol#L587-L675>.
+### Efficient SQRT method
+### Constant gas cost of 331 discounting RETURN and CALLDATALOAD logic, or 349 including everything.
+### Author: Lohann Paterno Coutinho Ferreira <developer@lohann.dev>
 
+# LOAD X
 push0
 calldataload
-push1 1
-## Stack: 1, x
 
-## Find the most significant bit, equivalent to `log2(x)`.
-## if x >= 2**128:
-push16 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-dup3
-gt
-# msb7 = (x >= 2**128) ? 128 : 0
+## ------ 2 ** (log2(x) / 2) ------
+push1 1
+# stack: 1 x
+dup2
+# stack: x 1 x
+
+## Lookup Table, stack: table x 1 x
+push30 0x010102020202030303030303030300000000000000000000000000000000
+
+## If value has upper 128 bits set, log2 result is at least 128
+dup2
+# stack: x table x 1 x
+push16 0xffffffffffffffffffffffffffffffff
+# stack: 2**128-1 x table x 1 x
+lt
+# stack: x>=2**128 table x 1 x
 push1 7
+# stack: 7 x>=2**128 table x 1 x
 shl
-# x >>= msb7
+# stack: ±log2(x) table x 1 x
+
+## If upper 64 bits of 128-bit half set, add 64 to result
+# stack: log2(x) table x 1 x
+dup3
+# stack: x ±log2(x) table x 1 x
+dup2
+# stack: ±log2(x) x ±log2(x) table x 1 x
+shr
+# stack: x/±log2(x) ±log2(x) table x 1 x
+push8 0xffffffffffffffff
+# stack: 2**64-1 x/±log2(x) ±log2(x) table x 1 x
+lt
+# stack: (x/2**±log2(x) >= 2**64) ±log2(x) table x 1 x
+push1 6
+# stack: 6 (x/2**±log2(x) >= 2**64) ±log2(x) table x 1 x
+shl
+# stack: ±log2(x) ±log2(x) table x 1 x
+or
+# stack: ±log2(x) table x 1 x
+
+## If upper 32 bits of 64-bit half set, add 32 to result
 dup3
 dup2
 shr
-## if x >= 2**64:
-push8 0xFFFFFFFFFFFFFFFF
-dup2
-gt
-# msb6 = (x >= 2**64) ? 64 : 0
-push1 6
-shl
-# x >>= msb6
-swap1
-dup2
-shr
-## if x >= 2**32:
-push4 0xFFFFFFFF
-dup2
-gt
-# msb5 = (x >= 2**32) ? 32 : 0
+push4 0xffffffff
+lt
 push1 5
 shl
-# x >>= msb5
-swap1
+or
+
+## If upper 16 bits of 32-bit half set, add 16 to result
+dup3
 dup2
 shr
-## if x >= 2**16:
-push2 0xFFFF
-dup2
-gt
-# msb4 = (x >= 2**16) ? 16 : 0
+push2 0xffff
+lt
 push1 4
 shl
-# x >>= msb4
-swap1
+or
+
+## If upper 8 bits of 16-bit half set, add 8 to result
+dup3
 dup2
 shr
-## if x >= 2**8:
-push1 0xFF
-dup2
-gt
-# msb3 = (x >= 2**8) ? 8 : 0
+push1 0xff
+lt
 push1 3
 shl
-# x >>= msb3
-swap1
+or
+
+## If upper 4 bits of 8-bit half set, add 4 to result
+dup3
 dup2
 shr
-## if x >= 2**4:
-push1 0x0F
-dup2
-gt
-# msb2 = (x >= 2**4) ? 4 : 0
+push1 0x0f
+lt
 push1 2
 shl
-# x >>= msb2
-swap1
+or
+# stack: ±log2(x) table x 1 x
+
+## Table lookup
+swap2
+# stack: x table ±log2(x) 1 x
+dup3
+# stack: ±log2(x) x table ±log2(x) 1 x
+shr
+# stack: i table ±log2(x) 1 x
+byte
+# stack: table[i] ±log2(x) 1 x
+or
+# stack: floor(log2(x)) 1 x
+
+## Compute: 2 ** (floor(log2(x)) / 2)
 dup2
+# stack: 1 log2(x) 1 x
 shr
-## if x >= 2**2:
-push1 0x04
-lt
-# msb1 = (x >= 2**2) ? 2 : 0
-dup8
+# stack: log2(x)/2 1 x
 shl
-# SKIPPED: x >>= msb2
-# SKIPPED: msb0 = (x >= 2**1) ? 1 : 0
-# msb = msb1 | msb2 | msb3 | msb4 | msb5 | msb6 | msb7
-or
-or
-or
-or
-or
-or
-## Stack: msb, 1, x
+# stack: 2**(log2(x)/2) x
+## ---------------------------------
 
-## Get the closest power of two: $x_0 = 2^{\lfloor \log_2(x) / 2 \rfloor}$.
-## This will be our initial guess for Newton's method, which has at least one bit correct.
-dup2
+## Netwon's Method
+# r = (r + x/r) / 2
+dup1
+dup3
+div
+add
+push1 1
 shr
-shl
-## Stack: root, x
 
-## Now we have 1 bit correct of $\sqrt{x}$. The next 7 iterations of Newton's method will expand it into 256 bits.
-## Note: division by zero returns 0, so not an issue here.
-# 1: root = (root + x / root) >> 1
 dup1
 dup3
 div
 add
 push1 1
 shr
-# 2: root = (root + x / root) >> 1
-dup1
-dup3
-div
-add
-push1 1
-shr
-# 3: root = (root + x / root) >> 1
-dup1
-dup3
-div
-add
-push1 1
-shr
-# 4: root = (root + x / root) >> 1
-dup1
-dup3
-div
-add
-push1 1
-shr
-# 5: root = (root + x / root) >> 1
-dup1
-dup3
-div
-add
-push1 1
-shr
-# 6: root = (root + x / root) >> 1
-dup1
-dup3
-div
-add
-push1 1
-shr
-# 7: root = (root + x / root) >> 1
-dup1
-dup3
-div
-add
-push1 1
-shr
-## Stack: root, x
 
-## For almost perfect squares, Newton's method cycles between `⌊√x⌋` => `⌊√x⌋ + 1`, so we need to round the result down.
-# if x / root < x:
+dup1
+dup3
+div
+add
+push1 1
+shr
+
+dup1
+dup3
+div
+add
+push1 1
+shr
+
+dup1
+dup3
+div
+add
+push1 1
+shr
+
+dup1
+dup3
+div
+add
+push1 1
+shr
+
+dup1
+dup3
+div
+add
+push1 1
+shr
+
+# y = x/r
 dup1
 swap2
 div
+
+# min(r, x/r)
 dup2
 gt
-# x -= 1
 swap1
 sub
-## Stack: root
 
-# return root
+## Return result
 push0
 mstore
-push1 0x20
+push1 32
 push0
 return
