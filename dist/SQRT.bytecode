@@ -1,5 +1,5 @@
 // Efficient SQRT method
-// Constant gas cost of 331 discounting RETURN and CALLDATALOAD logic, or 349 including everything.
+// Constant gas cost of 330 discounting RETURN and CALLDATALOAD logic, or 346 including everything.
 // Author: Lohann Paterno Coutinho Ferreira <developer@lohann.dev>
 
 // LOAD X
@@ -8,28 +8,24 @@ CALLDATALOAD
 
 // ------ 2 ** (log2(x) / 2) ------
 PUSH1 1 // stack: 1 x
-DUP2    // stack: x 1 x
-
-// Lookup Table, stack: table x 1 x
-PUSH30 0x010102020202030303030303030300000000000000000000000000000000
 
 // If value has upper 128 bits set, log2 result is at least 128
-DUP2                                       // stack: x table x 1 x
-PUSH16 0xffffffffffffffffffffffffffffffff  // stack: 2**128-1 x table x 1 x
-LT                                         // stack: x>=2**128 table x 1 x
-PUSH1 7                                    // stack: 7 x>=2**128 table x 1 x
-SHL                                        // stack: ±log2(x) table x 1 x
+DUP2                                       // stack: x 1 x
+PUSH16 0xffffffffffffffffffffffffffffffff  // stack: 2**128-1 x 1 x
+LT                                         // stack: x>=2**128 1 x
+PUSH1 7                                    // stack: 7 x>=2**128 1 x
+SHL                                        // stack: ±log2(x) 1 x
 
 // If upper 64 bits of 128-bit half set, add 64 to result
-// stack: log2(x) table x 1 x
-DUP3                     // stack: x ±log2(x) table x 1 x
-DUP2                     // stack: ±log2(x) x ±log2(x) table x 1 x
-SHR                      // stack: x/±log2(x) ±log2(x) table x 1 x
-PUSH8 0xffffffffffffffff // stack: 2**64-1 x/±log2(x) ±log2(x) table x 1 x
-LT                       // stack: (x/2**±log2(x) >= 2**64) ±log2(x) table x 1 x
-PUSH1 6                  // stack: 6 (x/2**±log2(x) >= 2**64) ±log2(x) table x 1 x
-SHL                      // stack: ±log2(x) ±log2(x) table x 1 x
-OR                       // stack: ±log2(x) table x 1 x
+// stack: log2(x) 1 x
+DUP3                     // stack: x ±log2(x) 1 x
+DUP2                     // stack: ±log2(x) x ±log2(x) 1 x
+SHR                      // stack: x/±log2(x) ±log2(x) 1 x
+PUSH8 0xffffffffffffffff // stack: 2**64-1 x/±log2(x) ±log2(x) 1 x
+LT                       // stack: (x/2**±log2(x) >= 2**64) ±log2(x) 1 x
+PUSH1 6                  // stack: 6 (x/2**±log2(x) >= 2**64) ±log2(x) 1 x
+SHL                      // stack: ±log2(x) ±log2(x) 1 x
+OR                       // stack: ±log2(x) 1 x
 
 // If upper 32 bits of 64-bit half set, add 32 to result
 DUP3
@@ -69,10 +65,11 @@ PUSH1 0x0f
 LT
 PUSH1 2
 SHL
-OR // stack: ±log2(x) table x 1 x
+OR // stack: ±log2(x) 1 x
 
 // Table lookup
-SWAP2 // stack: x table ±log2(x) 1 x
+PUSH30 0x010102020202030303030303030300000000000000000000000000000000
+DUP4  // stack: x table ±log2(x) 1 x
 DUP3  // stack: ±log2(x) x table ±log2(x) 1 x
 SHR   // stack: i table ±log2(x) 1 x
 BYTE  // stack: table[i] ±log2(x) 1 x

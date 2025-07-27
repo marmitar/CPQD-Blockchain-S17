@@ -1,5 +1,5 @@
 ### Efficient SQRT method
-### Constant gas cost of 331 discounting RETURN and CALLDATALOAD logic, or 349 including everything.
+### Constant gas cost of 330 discounting RETURN and CALLDATALOAD logic, or 346 including everything.
 ### Author: Lohann Paterno Coutinho Ferreira <developer@lohann.dev>
 
 # LOAD X
