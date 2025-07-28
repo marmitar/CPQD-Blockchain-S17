@@ -19,31 +19,17 @@ function sqrt(uint256 x) pure returns (uint256 root) {
         log := or(log, shl(4, lt(0xffff, shr(log, x))))
         log := or(log, shl(3, lt(0xff, shr(log, x))))
 
-        // At this point, our $\log_2(x)$ has the 5 upper bits right. For the remaining bits, uses can a lookup table
-        // based on a De Bruijn sequence to improve our approximation.
+        // At this point, our $\log_2(x)$ has the 5 upper bits right, so $k = x >> \log_2(x)$ is a number between 0 and
+        // 255. We'll use a De Bruijn sequence to approximate the square root of $k$, and then do:
+        // \[ \sqrt{x} = \sqrt{k} \times 2^{\log_2(x) / 2} \]
         //
-        // For 3 bits in log space we would need 8 bits of input, so a 256 byte table. We can actually skip the last
-        // bit, because we'll just use $log_2(x) / 2$, not the full $\log_2(x)$. The last bit of $\log_2(x)$ represents
-        //  2 bits in $x$, so our table is reduced to the following 64 bytes:
-        // 0x00020202040404040404040404040404060606060606060606060606060606060606060606060606060606060606060606060606060606060606060606060606
-        //
-        // This still doesn't fit in 32 bytes, but we can abuse the redundancy in the table to reach the last values.
-        // Specifically, 0x06 appears on all bytes from position 16 to 63, which means that it is accessed whenever the
-        // index matches 0x170. In this case, an index $i$ smaller than 31 can be used directly, but an index of 32-63
-        // more can be reduced to $i >> 1$, which maps to 16-31 and gives the same result 0x06. This can be expressed
-        // as $i >> (i > 31)$ or equivalently as $i >> (i >> 5)$.
-        let table := 0x02020204040404040404040404040406060606060606060606060606060606
+        // Since the EVM can only index 32 in the stack, we'll use the upper 5 bits of $k$ for indexing.
+        let table := 0x02030405060707080809090a0a0a0b0b0b0c0c0c0d0d0d0e0e0e0f0f0f0f1010
+        root := byte(shr(3, shr(log, x)), table)
 
-        let i := shr(2, shr(log, x))
-        i := shr(shr(5, i), i)
-        log := or(log, byte(i, table))
-
-        // Here we have an value almost equal to $\log_2(x)$, except maybe for the last bit. This is not an issue,
-        // because we'll use $2^{\log_2(x)/2} \approx \sqrt{x}$ as an initial approximation for the square root.
-        // This value ensures that:
-        // \[ 2^{\log_2(x)/2} \leq \sqrt{x} < 2^{\log_2(x)/2 + 1} \]
-        // So at least the first bit is correct.
-        root := shl(shr(1, log), 1)
+        // Here we approximate $\sqrt{x} = \sqrt{k} \times 2^{\log_2(x) / 2}$, which is at least 1 bit correct. It
+        // should be more, but we had to throw some information away.
+        root := mul(root, shl(shr(1, log), 1))
 
         // Now we have 1 bit correct of $\sqrt{x}$, and we need 128 bits for the roots of all `uint256` numbers. Each
         // iteration of the Newton's method doubles the precision, so 7 iterations are required.
