@@ -1,178 +1,112 @@
-### Efficient SQRT method
-### Constant gas cost of 331 discounting RETURN and CALLDATALOAD logic, or 349 including everything.
-### Author: Lohann Paterno Coutinho Ferreira <developer@lohann.dev>
-
-# LOAD X
 push0
 calldataload
-
-## ------ 2 ** (log2(x) / 2) ------
-push1 1
-# stack: 1 x
+push1 0x01
 dup2
-# stack: x 1 x
-
-## Lookup Table, stack: table x 1 x
 push30 0x010102020202030303030303030300000000000000000000000000000000
-
-## If value has upper 128 bits set, log2 result is at least 128
 dup2
-# stack: x table x 1 x
 push16 0xffffffffffffffffffffffffffffffff
-# stack: 2**128-1 x table x 1 x
 lt
-# stack: x>=2**128 table x 1 x
-push1 7
-# stack: 7 x>=2**128 table x 1 x
+push1 0x07
 shl
-# stack: ±log2(x) table x 1 x
-
-## If upper 64 bits of 128-bit half set, add 64 to result
-# stack: log2(x) table x 1 x
 dup3
-# stack: x ±log2(x) table x 1 x
 dup2
-# stack: ±log2(x) x ±log2(x) table x 1 x
 shr
-# stack: x/±log2(x) ±log2(x) table x 1 x
 push8 0xffffffffffffffff
-# stack: 2**64-1 x/±log2(x) ±log2(x) table x 1 x
 lt
-# stack: (x/2**±log2(x) >= 2**64) ±log2(x) table x 1 x
-push1 6
-# stack: 6 (x/2**±log2(x) >= 2**64) ±log2(x) table x 1 x
+push1 0x06
 shl
-# stack: ±log2(x) ±log2(x) table x 1 x
 or
-# stack: ±log2(x) table x 1 x
-
-## If upper 32 bits of 64-bit half set, add 32 to result
 dup3
 dup2
 shr
 push4 0xffffffff
 lt
-push1 5
+push1 0x05
 shl
 or
-
-## If upper 16 bits of 32-bit half set, add 16 to result
 dup3
 dup2
 shr
 push2 0xffff
 lt
-push1 4
+push1 0x04
 shl
 or
-
-## If upper 8 bits of 16-bit half set, add 8 to result
 dup3
 dup2
 shr
 push1 0xff
 lt
-push1 3
+push1 0x03
 shl
 or
-
-## If upper 4 bits of 8-bit half set, add 4 to result
 dup3
 dup2
 shr
 push1 0x0f
 lt
-push1 2
+push1 0x02
 shl
 or
-# stack: ±log2(x) table x 1 x
-
-## Table lookup
 swap2
-# stack: x table ±log2(x) 1 x
 dup3
-# stack: ±log2(x) x table ±log2(x) 1 x
 shr
-# stack: i table ±log2(x) 1 x
 byte
-# stack: table[i] ±log2(x) 1 x
 or
-# stack: floor(log2(x)) 1 x
-
-## Compute: 2 ** (floor(log2(x)) / 2)
 dup2
-# stack: 1 log2(x) 1 x
 shr
-# stack: log2(x)/2 1 x
 shl
-# stack: 2**(log2(x)/2) x
-## ---------------------------------
-
-## Netwon's Method
-# r = (r + x/r) / 2
 dup1
 dup3
 div
 add
-push1 1
+push1 0x01
 shr
-
 dup1
 dup3
 div
 add
-push1 1
+push1 0x01
 shr
-
 dup1
 dup3
 div
 add
-push1 1
+push1 0x01
 shr
-
 dup1
 dup3
 div
 add
-push1 1
+push1 0x01
 shr
-
 dup1
 dup3
 div
 add
-push1 1
+push1 0x01
 shr
-
 dup1
 dup3
 div
 add
-push1 1
+push1 0x01
 shr
-
 dup1
 dup3
 div
 add
-push1 1
+push1 0x01
 shr
-
-# y = x/r
 dup1
 swap2
 div
-
-# min(r, x/r)
 dup2
 gt
 swap1
 sub
-
-## Return result
 push0
 mstore
-push1 32
+push1 0x20
 push0
 return

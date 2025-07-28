@@ -1,0 +1,161 @@
+// Efficient SQRT method
+// Constant gas cost of 331 discounting RETURN and CALLDATALOAD logic, or 349 including everything.
+//
+// Special thanks to @caironeth for have found a better log2(x) here:
+//  - https://github.com/Lohann/openzeppelin-contracts/pull/1
+//
+// For testing use this tool: https://www.evm.codes/playground?fork=cancun
+// Authors:
+// - Lohann Paterno Coutinho Ferreira <developer@lohann.dev>
+// - Cairo <https://github.com/cairoeth>
+
+// LOAD X
+PUSH0
+CALLDATALOAD
+
+// ------ 2 ** (log2(x) / 2) ------
+PUSH1 1 // stack: 1 x
+DUP2    // stack: x 1 x
+
+// Lookup Table, stack: table x 1 x
+PUSH30 0x010102020202030303030303030300000000000000000000000000000000
+
+// If value has upper 128 bits set, log2 result is at least 128
+DUP2                                       // stack: x table x 1 x
+PUSH16 0xffffffffffffffffffffffffffffffff  // stack: 2**128-1 x table x 1 x
+LT                                         // stack: x>=2**128 table x 1 x
+PUSH1 7                                    // stack: 7 x>=2**128 table x 1 x
+SHL                                        // stack: ±log2(x) table x 1 x
+
+// If upper 64 bits of 128-bit half set, add 64 to result
+// stack: log2(x) table x 1 x
+DUP3                     // stack: x ±log2(x) table x 1 x
+DUP2                     // stack: ±log2(x) x ±log2(x) table x 1 x
+SHR                      // stack: x/±log2(x) ±log2(x) table x 1 x
+PUSH8 0xffffffffffffffff // stack: 2**64-1 x/±log2(x) ±log2(x) table x 1 x
+LT                       // stack: (x/2**±log2(x) >= 2**64) ±log2(x) table x 1 x
+PUSH1 6                  // stack: 6 (x/2**±log2(x) >= 2**64) ±log2(x) table x 1 x
+SHL                      // stack: ±log2(x) ±log2(x) table x 1 x
+OR                       // stack: ±log2(x) table x 1 x
+
+// If upper 32 bits of 64-bit half set, add 32 to result
+DUP3
+DUP2
+SHR
+PUSH4 0xffffffff
+LT
+PUSH1 5
+SHL
+OR
+
+// If upper 16 bits of 32-bit half set, add 16 to result
+DUP3
+DUP2
+SHR
+PUSH2 0xffff
+LT
+PUSH1 4
+SHL
+OR
+
+// If upper 8 bits of 16-bit half set, add 8 to result
+DUP3
+DUP2
+SHR
+PUSH1 0xff
+LT
+PUSH1 3
+SHL
+OR
+
+// If upper 4 bits of 8-bit half set, add 4 to result
+DUP3
+DUP2
+SHR
+PUSH1 0x0f
+LT
+PUSH1 2
+SHL
+OR // stack: ±log2(x) table x 1 x
+
+// Table lookup
+SWAP2 // stack: x table ±log2(x) 1 x
+DUP3  // stack: ±log2(x) x table ±log2(x) 1 x
+SHR   // stack: i table ±log2(x) 1 x
+BYTE  // stack: table[i] ±log2(x) 1 x
+OR    // stack: floor(log2(x)) 1 x
+
+// Compute: 2 ** (floor(log2(x)) / 2)
+DUP2  // stack: 1 log2(x) 1 x
+SHR   // stack: log2(x)/2 1 x
+SHL   // stack: 2**(log2(x)/2) x
+// ---------------------------------
+
+// Newton's method
+// r = (r + x/r) / 2
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 1
+SHR
+
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 1
+SHR
+
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 1
+SHR
+
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 1
+SHR
+
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 1
+SHR
+
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 1
+SHR
+
+DUP1
+DUP3
+DIV
+ADD
+PUSH1 1
+SHR
+
+// y = x/r
+DUP1
+SWAP2
+DIV
+
+// min(r, x/r)
+DUP2
+GT
+SWAP1
+SUB
+
+// Return result
+PUSH0
+MSTORE
+PUSH1 32
+PUSH0
+RETURN
