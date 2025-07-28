@@ -1,7 +1,7 @@
-def msb_position(n):
+def msb_position(n: int) -> int:
     return (n.bit_length() - 1) if n else 0
 
-def generate_lookup_table():
+def generate_lookup_table() -> str:
     table = [msb_position(i) for i in range(16)]
 
     # Pad the table to 32 bytes

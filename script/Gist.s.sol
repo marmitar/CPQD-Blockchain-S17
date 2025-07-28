@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import { Script, console } from "forge-std/Script.sol";
 
-import { Sqrt } from "../src/gist/Sqrt.sol";
+import { sqrt } from "../src/gist/Sqrt.sol";
 
 contract Gist is Script {
     uint256 private transient count;
@@ -40,12 +40,10 @@ contract Gist is Script {
         }
     }
 
-    Sqrt private immutable IT = new Sqrt();
-
     function test(uint256 x) private {
         vm.resumeGasMetering();
         uint256 startGas = gasleft();
-        uint256 root = IT.sqrt(x);
+        uint256 root = sqrt(x);
         uint256 endGas = gasleft();
         vm.pauseGasMetering();
         uint256 gasUsed = startGas - endGas - 2;
