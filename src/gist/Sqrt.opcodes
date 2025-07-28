@@ -1,5 +1,5 @@
 // Efficient SQRT method
-// Constant gas cost of 307 discounting RETURN and CALLDATALOAD logic, or 325 including everything.
+// Constant gas cost of 293 discounting RETURN and CALLDATALOAD logic, or 311 including everything.
 //
 // Special thanks to @caironeth for have found a better log2(x) here:
 //  - https://github.com/Lohann/openzeppelin-contracts/pull/1
@@ -65,7 +65,7 @@ SHL
 OR // stack: ±log2(x) x
 
 // Table lookup
-PUSH32 0x02030405060707080809090a0a0a0b0b0b0c0c0c0d0d0d0e0e0e0f0f0f0f1010
+PUSH32 0x1b3647545f69737b838b9299a0a6acb2b7bdc2c8cdd2d6dbe0e4e9edf1f6fafe
 // stack: table ±log2(x) x
 DUP3  // stack: x table ±log2(x) x
 DUP3  // stack: ±log2(x) x table ±log2(x) x
@@ -74,22 +74,17 @@ PUSH1 3
 SHR   // stack: i table ±log2(x) x
 BYTE  // stack: table[i] ±log2(x) x
 
-// Initial guess: ±sqrt(x) := table[i] * 2**(±log2(x)/2)
+// Initial guess: ±sqrt(x) := table[i] * 2**(±log2(x)/2) / 16
 SWAP1 // stack: ±log2(x) table[i] x
 PUSH1 1
 SHR   // stack: ±log2(x)/2 table[i] x
-SHL   // stack: ±sqrt(x) x
+SHL   // stack: 16*±sqrt(x) x
+PUSH1 4
+SHR   // stack: ±sqrt(x) x
 // ---------------------------------
 
 // Newton's method
 // r = (r + x/r) / 2
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 1
-SHR
-
 DUP1
 DUP3
 DIV

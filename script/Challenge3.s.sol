@@ -26,10 +26,11 @@ contract GenerateDeBruijnTable is Script {
     }
 
     /**
-     * @notice Pack the value of a square root of a `uint8` in a byte.
+     * @notice Pack the value of a square root of a `uint8` in a byte with the highest precision possible.
      */
-    function packRounded(UD60x18 value) private pure returns (uint8 packed) {
-        uint256 rounded = convert(value + HALF_UNIT);
+    function packSqrt256Bits(UD60x18 sqrtValue) private pure returns (uint8 packed) {
+        UD60x18 base = convert(256).sqrt();
+        uint256 rounded = convert(sqrtValue * base + HALF_UNIT);
         require(rounded <= type(uint8).max, "sqrt cannot be packed");
         require(rounded != 0, "zeros in the table will cause failures in the algorithm");
         return uint8(rounded);
@@ -56,7 +57,7 @@ contract GenerateDeBruijnTable is Script {
         table = new uint8[](32);
         for (uint256 i = 0; i < 32; i++) {
             UD60x18 average = sqrtAverage(8 * i, 8 * (i + 1));
-            uint8 packed = packRounded(average);
+            uint8 packed = packSqrt256Bits(average);
             console.log("%s: sqrt=%s, packed=%s", i, toString(average), vm.toString(abi.encodePacked(packed)));
             table[i] = packed;
         }

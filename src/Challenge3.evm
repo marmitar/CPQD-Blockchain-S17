@@ -37,7 +37,7 @@ lt
 push1 0x03
 shl
 or
-push32 0x02030405060707080809090a0a0a0b0b0b0c0c0c0d0d0d0e0e0e0f0f0f0f1010
+push32 0x1b3647545f69737b838b9299a0a6acb2b7bdc2c8cdd2d6dbe0e4e9edf1f6fafe
 dup3
 dup3
 shr
@@ -48,11 +48,7 @@ swap1
 push1 0x01
 shr
 shl
-dup1
-dup3
-div
-add
-push1 0x01
+push1 0x04
 shr
 dup1
 dup3
