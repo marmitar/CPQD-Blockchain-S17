@@ -1,5 +1,5 @@
 // Efficient SQRT method
-// Constant gas cost of 328 discounting RETURN and CALLDATALOAD logic, or 346 including everything.
+// Constant gas cost of 322 discounting RETURN and CALLDATALOAD logic, or 340 including everything.
 //
 // Special thanks to @caironeth for have found a better log2(x) here:
 //  - https://github.com/Lohann/openzeppelin-contracts/pull/1
@@ -63,23 +63,20 @@ PUSH1 0xff
 LT
 PUSH1 3
 SHL
-OR
-
-// If upper 4 bits of 8-bit half set, add 4 to result
-DUP3
-DUP2
-SHR
-PUSH1 0x0f
-LT
-PUSH1 2
-SHL
 OR // stack: ±log2(x) 1 x
 
 // Table lookup
-PUSH30 0x010102020202030303030303030300000000000000000000000000000000
+PUSH31 0x02020204040404040404040404040406060606060606060606060606060606
 // stack: table ±log2(x) 1 x
 DUP4  // stack: x table ±log2(x) 1 x
 DUP3  // stack: ±log2(x) x table ±log2(x) 1 x
+SHR   // stack: 4*±i table ±log2(x) 1 x
+PUSH1 2
+SHR   // stack: ±i table ±log2(x) 1 x
+// i = i >> (i >> 5)
+DUP1  // stack: ±i ±i table ±log2(x) 1 x
+PUSH1 5
+SHR
 SHR   // stack: i table ±log2(x) 1 x
 BYTE  // stack: table[i] ±log2(x) 1 x
 OR    // stack: floor(log2(x)) 1 x

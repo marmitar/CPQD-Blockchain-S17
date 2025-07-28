@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Gas efficient SQRT method, computes floor(sqrt(x)).
-// Constant gas cost of 351.
+// Constant gas cost of 363.
 //
 // Authors: Lohann Ferreira, Tiago de Paula
 pragma solidity >=0.7.0 <0.9.0;
@@ -13,10 +13,11 @@ function sqrt(uint256 x) pure returns (uint256 r) {
         r := or(r, shl(5, lt(0xFFFFFFFF, shr(r, x))))
         r := or(r, shl(4, lt(0xFFFF, shr(r, x))))
         r := or(r, shl(3, lt(0xFF, shr(r, x))))
-        r := or(r, shl(2, lt(0xF, shr(r, x))))
 
-        let lut := 0x0000010102020202030303030303030300000000000000000000000000000000
-        r := or(r, byte(shr(r, x), lut))
+        let lut := 0x0002020204040404040404040404040406060606060606060606060606060606
+        let i := shr(2, shr(r, x))
+        i := shr(shr(5, i), i)
+        r := or(r, byte(i, lut))
 
         r := shl(shr(1, r), 1)
 

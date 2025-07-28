@@ -13,13 +13,13 @@ import "../src/Challenge3.sol" as YUL;
  */
 contract GenerateDeBruijnTable is Script {
     /**
-     * @notice Generate table of precomputed `msb()` values for 2-bit indexing.
+     * @notice Generate table of approximated `msb()` values for 3-bit indexing.
      */
     function makeTable() private pure returns (uint8[] memory table) {
-        table = new uint8[](16);
-        for (uint8 i = 0; i < 16; i++) {
-            uint256 bit = msb(i);
-            uint8 packed = uint8(bit);
+        table = new uint8[](64);
+        for (uint8 i = 0; i < 64; i++) {
+            uint256 bit = msb(i << 2);
+            uint8 packed = uint8(bit) & 0x0E;
             console.log("%s: msb=%s, packed=%s", i, bit, vm.toString(abi.encodePacked(packed)));
             require(bit <= type(uint8).max);
             table[i] = packed;
