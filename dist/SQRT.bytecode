@@ -1,151 +1,193 @@
-// Efficient SQRT method
-// Constant gas cost of 330 discounting RETURN and CALLDATALOAD logic, or 346 including everything.
-// Author: Lohann Paterno Coutinho Ferreira <developer@lohann.dev>
+/// @title Efficient Integer Square Root method.
+/// @author Tiago de Paula <tiagodepalves@gmail.com>
+/// @notice Runtime cost: 340 gas (324 discounting RETURN and CALLDATALOAD logic).
+/// @dev Based on <https://gist.github.com/Lohann/f01e2558691ba8648f1e5a7c6e8d37da>.
 
-// LOAD X
-PUSH0
-CALLDATALOAD
+push0
+calldataload
+push1 1
+// stack: 1, x
 
-// ------ 2 ** (log2(x) / 2) ------
-PUSH1 1 // stack: 1 x
+/// First, we find an approximation for $\log_2(x)$.
+///
+/// The following algorithm does a "binary seach" over the regions of $x$, updating our approximation of $\log_2(x)$
+/// depending on wether the current value is bigger or lower than threshold (i.e. the highest bit is left or right
+/// of a specific region). At each iteration, it gives one extra bit of information on the result of $\log_2(x)$.
 
-// If value has upper 128 bits set, log2 result is at least 128
-DUP2                                       // stack: x 1 x
-PUSH16 0xffffffffffffffffffffffffffffffff  // stack: 2**128-1 x 1 x
-LT                                         // stack: x>=2**128 1 x
-PUSH1 7                                    // stack: 7 x>=2**128 1 x
-SHL                                        // stack: ±log2(x) 1 x
+// if x >= 2**128:
+dup2
+push16 0xffffffffffffffffffffffffffffffff
+lt
+// 8th bit: log2(x) |= 128
+push1 7
+shl
+// stack: log2, 1, x
 
-// If upper 64 bits of 128-bit half set, add 64 to result
-// stack: log2(x) 1 x
-DUP3                     // stack: x ±log2(x) 1 x
-DUP2                     // stack: ±log2(x) x ±log2(x) 1 x
-SHR                      // stack: x/±log2(x) ±log2(x) 1 x
-PUSH8 0xffffffffffffffff // stack: 2**64-1 x/±log2(x) ±log2(x) 1 x
-LT                       // stack: (x/2**±log2(x) >= 2**64) ±log2(x) 1 x
-PUSH1 6                  // stack: 6 (x/2**±log2(x) >= 2**64) ±log2(x) 1 x
-SHL                      // stack: ±log2(x) ±log2(x) 1 x
-OR                       // stack: ±log2(x) 1 x
+// x' = x >> log2
+dup3
+dup2
+shr
+// if x' >= 2**64:
+push8 0xffffffffffffffff
+lt
+// 7th bit: log2(x) |= 64
+push1 6
+shl
+or
+// stack: log2, 1, x
 
-// If upper 32 bits of 64-bit half set, add 32 to result
-DUP3
-DUP2
-SHR
-PUSH4 0xffffffff
-LT
-PUSH1 5
-SHL
-OR
+// x' = x >> log2
+dup3
+dup2
+shr
+// if x' >= 2**32:
+push4 0xffffffff
+lt
+// 6th bit: log2(x) |= 32
+push1 5
+shl
+or
+// stack: log2, 1, x
 
-// If upper 16 bits of 32-bit half set, add 16 to result
-DUP3
-DUP2
-SHR
-PUSH2 0xffff
-LT
-PUSH1 4
-SHL
-OR
+// x' = x >> log2
+dup3
+dup2
+shr
+// if x' >= 2**16:
+push2 0xffff
+lt
+// 5th bit: log2(x) |= 16
+push1 4
+shl
+or
+// stack: log2, 1, x
 
-// If upper 8 bits of 16-bit half set, add 8 to result
-DUP3
-DUP2
-SHR
-PUSH1 0xff
-LT
-PUSH1 3
-SHL
-OR
+// x' = x >> log2
+dup3
+dup2
+shr
+// if x' >= 2**8:
+push1 0xff
+lt
+// 4th bit: log2(x) |= 8
+push1 3
+shl
+or
+// stack: log2, 1, x
 
-// If upper 4 bits of 8-bit half set, add 4 to result
-DUP3
-DUP2
-SHR
-PUSH1 0x0f
-LT
-PUSH1 2
-SHL
-OR // stack: ±log2(x) 1 x
+/// At this point, our $\log_2(x)$ has the 5 upper bits right. For the remaining bits, uses can a lookup table based on
+/// a De Bruijn sequence to improve our approximation.
+///
+/// For 3 bits in log space we would need 8 bits of input, so a 256 byte table. We can actually skip the last bit,
+/// because we'll just use $log_2(x) / 2$, not the full $\log_2(x)$. The last bit of $\log_2(x)$ represents 2 bits in
+/// $x$, so our table is reduced to the following 64 bytes:
+/// 0x00020202040404040404040404040404060606060606060606060606060606060606060606060606060606060606060606060606060606060606060606060606
+///
+/// This still doesn't fit in 32 bytes, but we can abuse the redundancy in the table to reach the last values.
+/// Specifically, 0x06 appears on all bytes from position 16 to 63, which means that it is accessed whenever the index
+/// matches 0x170. In this case, an index $i$ smaller than 31 can be used directly, but an index of 32-63 more can be
+/// reduced to $i >> 1$, which maps to 16-31 and gives the same result 0x06. This can be expressed as $i >> (i > 31)$
+/// or equivalently as $i >> (i >> 5)$.
+push31 0x02020204040404040404040404040406060606060606060606060606060606
+// stack: table, log2, 1, x
 
-// Table lookup
-PUSH30 0x010102020202030303030303030300000000000000000000000000000000
-DUP4  // stack: x table ±log2(x) 1 x
-DUP3  // stack: ±log2(x) x table ±log2(x) 1 x
-SHR   // stack: i table ±log2(x) 1 x
-BYTE  // stack: table[i] ±log2(x) 1 x
-OR    // stack: floor(log2(x)) 1 x
+// x' = x >> log2
+dup4
+dup3
+shr
+/// throw away the first 2 bits
+// i = x' >> 2
+push1 2
+shr
+// i = i >> (i >> 5)
+dup1
+push1 5
+shr
+shr
+// table[i]
+byte
+or
+// stack: log2, 1, x
 
-// Compute: 2 ** (floor(log2(x)) / 2)
-DUP2  // stack: 1 log2(x) 1 x
-SHR   // stack: log2(x)/2 1 x
-SHL   // stack: 2**(log2(x)/2) x
-// ---------------------------------
+/// Here we have an value almost equal to $\log_2(x)$, except maybe for the last bit. This is not an issue, because we'll
+/// use $2^{\log_2(x)/2} \approx \sqrt{x}$ as an initial approximation for the square root. This value ensures that:
+/// \[ 2^{\log_2(x)/2} \leq \sqrt{x} < 2^{\log_2(x)/2 + 1} \]
+/// So at least the first bit is correct.
+dup2
+shr
+shl
+// stack: root, x
 
-// Netwon's Method
-// r = (r + x/r) / 2
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 1
-SHR
+/// Now we have 1 bit correct of $\sqrt{x}$, and we need 128 bits for the roots of all `uint256` numbers. Each iteration
+/// of the Newton's method doubles the precision, so 7 iterations are required.
 
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 1
-SHR
+/// Note: division by zero returns 0, giving the correct result for $\sqrt{0}$.
+// 1: root = (root + x / root) / 2
+dup1
+dup3
+div
+add
+push1 1
+shr
+// 2: root = (root + x / root) / 2
+dup1
+dup3
+div
+add
+push1 1
+shr
+// 3: root = (root + x / root) / 2
+dup1
+dup3
+div
+add
+push1 1
+shr
+// 4: root = (root + x / root) / 2
+dup1
+dup3
+div
+add
+push1 1
+shr
+// 5: root = (root + x / root) / 2
+dup1
+dup3
+div
+add
+push1 1
+shr
+// 6: root = (root + x / root) / 2
+dup1
+dup3
+div
+add
+push1 1
+shr
+// 7: root = (root + x / root) / 2
+dup1
+dup3
+div
+add
+push1 1
+shr
+// stack: root, x
 
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 1
-SHR
+/// For almost perfect squares, Newton's method cycles between ⌊√x⌋ and ⌊√x⌋ + 1, so we need to round the result down.
+// if x > x / root:
+dup1
+swap2
+div
+dup2
+gt
+// x -= 1
+swap1
+sub
+// stack: root
 
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 1
-SHR
-
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 1
-SHR
-
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 1
-SHR
-
-DUP1
-DUP3
-DIV
-ADD
-PUSH1 1
-SHR
-
-// y = x/r
-DUP1
-SWAP2
-DIV
-
-// min(r, x/r)
-DUP2
-GT
-SWAP1
-SUB
-
-// Return result
-PUSH0
-MSTORE
-PUSH1 32
-PUSH0
-RETURN
+// return root
+push0
+mstore
+push1 0x20
+push0
+return
