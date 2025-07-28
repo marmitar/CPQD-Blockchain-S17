@@ -1,5 +1,5 @@
 // Efficient SQRT method
-// Constant gas cost of 322 discounting RETURN and CALLDATALOAD logic, or 340 including everything.
+// Constant gas cost of 307 discounting RETURN and CALLDATALOAD logic, or 325 including everything.
 //
 // Special thanks to @caironeth for have found a better log2(x) here:
 //  - https://github.com/Lohann/openzeppelin-contracts/pull/1
@@ -15,28 +15,27 @@ PUSH0
 CALLDATALOAD
 
 // ------ 2 ** (log2(x) / 2) ------
-PUSH1 1 // stack: 1 x
 
 // If value has upper 128 bits set, log2 result is at least 128
-DUP2                                       // stack: x 1 x
-PUSH16 0xffffffffffffffffffffffffffffffff  // stack: 2**128-1 x 1 x
-LT                                         // stack: x>=2**128 1 x
-PUSH1 7                                    // stack: 7 x>=2**128 1 x
-SHL                                        // stack: ±log2(x) 1 x
+DUP1                                       // stack: x x
+PUSH16 0xffffffffffffffffffffffffffffffff  // stack: 2**128-1 x x
+LT                                         // stack: x>=2**128 x
+PUSH1 7                                    // stack: 7 x>=2**128 x
+SHL                                        // stack: ±log2(x) x
 
 // If upper 64 bits of 128-bit half set, add 64 to result
 // stack: log2(x) 1 x
-DUP3                     // stack: x ±log2(x) 1 x
-DUP2                     // stack: ±log2(x) x ±log2(x) 1 x
-SHR                      // stack: x/±log2(x) ±log2(x) 1 x
-PUSH8 0xffffffffffffffff // stack: 2**64-1 x/±log2(x) ±log2(x) 1 x
-LT                       // stack: (x/2**±log2(x) >= 2**64) ±log2(x) 1 x
-PUSH1 6                  // stack: 6 (x/2**±log2(x) >= 2**64) ±log2(x) 1 x
-SHL                      // stack: ±log2(x) ±log2(x) 1 x
-OR                       // stack: ±log2(x) 1 x
+DUP2                     // stack: x ±log2(x) x
+DUP2                     // stack: ±log2(x) x ±log2(x) x
+SHR                      // stack: x/±log2(x) ±log2(x) x
+PUSH8 0xffffffffffffffff // stack: 2**64-1 x/±log2(x) ±log2(x) x
+LT                       // stack: (x/2**±log2(x) >= 2**64) ±log2(x) x
+PUSH1 6                  // stack: 6 (x/2**±log2(x) >= 2**64) ±log2(x) x
+SHL                      // stack: ±log2(x) ±log2(x) x
+OR                       // stack: ±log2(x) x
 
 // If upper 32 bits of 64-bit half set, add 32 to result
-DUP3
+DUP2
 DUP2
 SHR
 PUSH4 0xffffffff
@@ -46,7 +45,7 @@ SHL
 OR
 
 // If upper 16 bits of 32-bit half set, add 16 to result
-DUP3
+DUP2
 DUP2
 SHR
 PUSH2 0xffff
@@ -56,35 +55,30 @@ SHL
 OR
 
 // If upper 8 bits of 16-bit half set, add 8 to result
-DUP3
+DUP2
 DUP2
 SHR
 PUSH1 0xff
 LT
 PUSH1 3
 SHL
-OR // stack: ±log2(x) 1 x
+OR // stack: ±log2(x) x
 
 // Table lookup
-PUSH31 0x02020204040404040404040404040406060606060606060606060606060606
-// stack: table ±log2(x) 1 x
-DUP4  // stack: x table ±log2(x) 1 x
-DUP3  // stack: ±log2(x) x table ±log2(x) 1 x
-SHR   // stack: 4*±i table ±log2(x) 1 x
-PUSH1 2
-SHR   // stack: ±i table ±log2(x) 1 x
-// i = i >> (i >> 5)
-DUP1  // stack: ±i ±i table ±log2(x) 1 x
-PUSH1 5
-SHR
-SHR   // stack: i table ±log2(x) 1 x
-BYTE  // stack: table[i] ±log2(x) 1 x
-OR    // stack: floor(log2(x)) 1 x
+PUSH32 0x02030405060707080809090a0a0a0b0b0b0c0c0c0d0d0d0e0e0e0f0f0f0f1010
+// stack: table ±log2(x) x
+DUP3  // stack: x table ±log2(x) x
+DUP3  // stack: ±log2(x) x table ±log2(x) x
+SHR   // stack: 8*i table ±log2(x) x
+PUSH1 3
+SHR   // stack: i table ±log2(x) x
+BYTE  // stack: table[i] ±log2(x) x
 
-// Compute: 2 ** (floor(log2(x)) / 2)
-DUP2  // stack: 1 log2(x) 1 x
-SHR   // stack: log2(x)/2 1 x
-SHL   // stack: 2**(log2(x)/2) x
+// Initial guess: ±sqrt(x) := table[i] * 2**(±log2(x)/2)
+SWAP1 // stack: ±log2(x) table[i] x
+PUSH1 1
+SHR   // stack: ±log2(x)/2 table[i] x
+SHL   // stack: ±sqrt(x) x
 // ---------------------------------
 
 // Newton's method

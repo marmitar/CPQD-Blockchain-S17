@@ -1,12 +1,11 @@
 push0
 calldataload
-push1 0x01
-dup2
+dup1
 push16 0xffffffffffffffffffffffffffffffff
 lt
 push1 0x07
 shl
-dup3
+dup2
 dup2
 shr
 push8 0xffffffffffffffff
@@ -14,7 +13,7 @@ lt
 push1 0x06
 shl
 or
-dup3
+dup2
 dup2
 shr
 push4 0xffffffff
@@ -22,7 +21,7 @@ lt
 push1 0x05
 shl
 or
-dup3
+dup2
 dup2
 shr
 push2 0xffff
@@ -30,7 +29,7 @@ lt
 push1 0x04
 shl
 or
-dup3
+dup2
 dup2
 shr
 push1 0xff
@@ -38,19 +37,15 @@ lt
 push1 0x03
 shl
 or
-push31 0x02020204040404040404040404040406060606060606060606060606060606
-dup4
+push32 0x02030405060707080809090a0a0a0b0b0b0c0c0c0d0d0d0e0e0e0f0f0f0f1010
+dup3
 dup3
 shr
-push1 0x02
-shr
-dup1
-push1 0x05
-shr
+push1 0x03
 shr
 byte
-or
-dup2
+swap1
+push1 0x01
 shr
 shl
 dup1

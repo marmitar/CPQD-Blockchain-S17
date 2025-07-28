@@ -1,14 +1,16 @@
-def msb_position(n: int) -> int:
-    return (n.bit_length() - 1) if n else 0
+from math import sqrt
 
 def generate_lookup_table() -> str:
-    table = [msb_position(i << 2) & 0x0E for i in range(64)]
+    roots = [list[int]() for _ in range(32)]
+    for i in range(256):
+        roots[i >> 3].append(sqrt(i))
+    table = [sum(roots[i]) / len(roots[i]) for i in range(32)]
 
-    # Convert to a single 64-byte value
+    # Convert to a single 32-byte value
     lookup_value = 0
     for i, value in enumerate(table):
-        lookup_value |= value << (8 * (63 - i))
+        lookup_value |= round(value) << (8 * (31 - i))
 
-    return f"0x{lookup_value:0128x}"
+    return f"0x{lookup_value:064x}"
 
 print(generate_lookup_table())
