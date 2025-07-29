@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.30;
 
 import { StdCheats, Test, TestBase, Vm } from "forge-std/Test.sol";
 

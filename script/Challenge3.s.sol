@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.30;
 
 import { Script, console } from "forge-std/Script.sol";
 import { HALF_UNIT, UD60x18, ZERO, convert } from "prb-math/UD60x18.sol";

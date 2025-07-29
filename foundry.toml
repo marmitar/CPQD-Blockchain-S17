@@ -1,7 +1,7 @@
 # See https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 [profile.default]
 src = 'src'
-evm_version = "cancun"
+evm_version = 'prague'
 # for development
 out = 'out'
 libs = ['lib']
