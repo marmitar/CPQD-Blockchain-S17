@@ -1,13 +1,11 @@
 ## @title Efficient Integer Square Root method.
 ## @author Tiago de Paula <tiagodepalves@gmail.com>
-## @notice Runtime cost: 319 gas (301 discounting RETURN and CALLDATALOAD logic).
+## @notice Runtime cost: 311 gas (293 discounting RETURN and CALLDATALOAD logic).
 ## @dev Based on <https://gist.github.com/Lohann/f01e2558691ba8648f1e5a7c6e8d37da>.
 
 push0
 calldataload
-push1 1
-dup1
-# stack: 1, 1, x
+# stack: x
 
 ## First, we find an approximation for $\log_2(x)$.
 ##
@@ -16,16 +14,16 @@ dup1
 ## of a specific region). At each iteration, it gives one extra bit of information on the result of $\log_2(x)$.
 
 # if x >= 2**128:
-dup3
+dup1
 push16 0xffffffffffffffffffffffffffffffff
 lt
 # 8th bit: log2(x) |= 128
 push1 7
 shl
-# stack: log2, 1, 1, x
+# stack: log2, x
 
 # x' = x >> log2
-dup4
+dup2
 dup2
 shr
 # if x' >= 2**64:
@@ -35,10 +33,10 @@ lt
 push1 6
 shl
 or
-# stack: log2, 1, 1, x
+# stack: log2, x
 
 # x' = x >> log2
-dup4
+dup2
 dup2
 shr
 # if x' >= 2**32:
@@ -48,10 +46,10 @@ lt
 push1 5
 shl
 or
-# stack: log2, 1, 1, x
+# stack: log2, x
 
 # x' = x >> log2
-dup4
+dup2
 dup2
 shr
 # if x' >= 2**16:
@@ -61,10 +59,10 @@ lt
 push1 4
 shl
 or
-# stack: log2, 1, 1, x
+# stack: log2, x
 
 # x' = x >> log2
-dup4
+dup2
 dup2
 shr
 # if x' >= 2**8:
@@ -74,7 +72,7 @@ lt
 push1 3
 shl
 or
-# stack: log2, 1, 1, x
+# stack: log2, x
 
 ## At this point, our $\log_2(x)$ has the 5 upper bits right, so $k = x >> \log_2(x)$ is a number between 0 and 255.
 ## We'll use a De Bruijn sequence to approximate the square root of $k \times 256$, and then do:
@@ -82,10 +80,10 @@ or
 ##
 ## Since the EVM can only index 32 in the stack, we'll use the upper 5 bits of $k$ for indexing.
 push32 0x1b3647545f69737b838b9299a0a6acb2b7bdc2c8cdd2d6dbe0e4e9edf1f6fafe
-# stack: table, log2, 1, 1, x
+# stack: table, log2, x
 
 # k = x >> log2
-dup5
+dup3
 dup3
 shr
 ## throw away the first 3 bits
@@ -93,15 +91,15 @@ shr
 push1 3
 shr
 byte
-# stack: table[i], log2, 1, 1, x
+# stack: table[i], log2, x
 
 ## Here we use $\sqrt{x} = \sqrt{k} \times 2^{\log_2(x) / 2}$ with 2 bits of precision using the De Bruijn sequence
 ## approximation.
-swap3
-# stack: 1, log2, 1, table[i], x
+swap1
+push1 1
 shr
+# stack: log2/2, table[i], x
 shl
-mul
 ## remove the sqrt base $\sqrt{256 k} = 16 \sqrt{k}$
 push1 4
 shr

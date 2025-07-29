@@ -25,11 +25,11 @@ function sqrt(uint256 x) pure returns (uint256 root) {
         //
         // Since the EVM can only index 32 in the stack, we'll use the upper 5 bits of $k$ for indexing.
         let table := 0x1b3647545f69737b838b9299a0a6acb2b7bdc2c8cdd2d6dbe0e4e9edf1f6fafe
-        root := byte(shr(3, shr(log, x)), table)
+        let i := shr(3, shr(log, x))
 
         // Here we use $\sqrt{x} = \sqrt{k} \times 2^{\log_2(x) / 2}$ with 2 bits of precision using the De Bruijn
         // sequence approximation.
-        root := shr(4, mul(root, shl(shr(1, log), 1)))
+        root := shr(4, shl(shr(1, log), byte(i, table)))
 
         // Now we have 2 bit correct of $\sqrt{x}$, and we need 128 bits for the roots of all `uint256` numbers.
         // Each iteration of the Newton's method doubles the precision, so 6 iterations are required.
