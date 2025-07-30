@@ -28,24 +28,66 @@ contract GenerateDeBruijnTable is Script {
     /**
      * @notice Pack the value of a square root of a `uint8` in a byte with the highest precision possible.
      */
-    function packSqrt256Bits(UD60x18 sqrtValue) private pure returns (bytes1 packed) {
+    function packSqrt256Bits(UD60x18 sqrtValue) private pure returns (uint8 packed) {
         UD60x18 base = convert(256).sqrt();
         uint256 rounded = convert(sqrtValue * base + HALF_UNIT);
         require(rounded <= type(uint8).max, "sqrt cannot be packed");
-        require(rounded != 0, "zeros in the table will fail");
-        return bytes1(uint8(rounded));
+        require(rounded != 0, "zeros in the table will cause failures in the algorithm");
+        return uint8(rounded);
     }
 
     /**
-     * @notice Generate the lookup table of precomputed square roots.
+     * @notice Format a `UD60x18` with 3 decimal places of precision.
      */
-    function run() external pure returns (bytes32 table) {
+    function toString(UD60x18 value) private pure returns (string memory fmt) {
+        string memory integer = vm.toString(convert(value));
+        string memory frac = vm.toString(convert(value.frac() * convert(1000) + HALF_UNIT));
+
+        bytes memory zeros = new bytes(3 - bytes(frac).length);
+        for (uint8 i = 0; i < zeros.length; i++) {
+            zeros[i] = "0";
+        }
+        return string.concat(integer, ".", string(zeros), frac);
+    }
+
+    /**
+     * @notice Generate table of approximated `msb()` values for 3-bit indexing.
+     */
+    function makeTable() private pure returns (uint8[] memory table) {
+        table = new uint8[](32);
         for (uint256 i = 0; i < 32; i++) {
             UD60x18 average = sqrtAverage(8 * i, 8 * (i + 1));
-            bytes1 packed = packSqrt256Bits(average);
-            console.log("%s: average=%s, packed=%s", i, convert(average), uint8(packed));
-            table |= bytes32(packed) >> 8 * i;
+            uint8 packed = packSqrt256Bits(average);
+            console.log("%s: sqrt=%s, packed=%s", i, toString(average), vm.toString(abi.encodePacked(packed)));
+            table[i] = packed;
         }
+    }
+
+    /**
+     * @notice Pack array of `uint8` values into a byte array.
+     */
+    function packTable(uint8[] memory values) private pure returns (bytes memory packed) {
+        packed = new bytes(values.length);
+        for (uint256 i = 0; i < values.length; i++) {
+            packed[i] = bytes1(values[i]);
+        }
+    }
+
+    /**
+     * @notice Split byte array into continuous 32-byte words, for indexing with `BYTE` (1A) instruction.
+     */
+    function splitWords(bytes memory data) private pure returns (bytes32[] memory words) {
+        words = new bytes32[]((data.length + 31) >> 5);
+        for (uint256 i = 0; i < data.length; i++) {
+            words[i >> 5] |= bytes32(data[i]) >> ((i << 3) & 0xFF);
+        }
+    }
+
+    /**
+     * @notice Build lookup table split into 32-byte words.
+     */
+    function run() external pure returns (bytes32[] memory table) {
+        return splitWords(packTable(makeTable()));
     }
 }
 
